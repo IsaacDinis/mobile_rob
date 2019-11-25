@@ -10,7 +10,7 @@ class MonteCarlo:
     _1sqrt2pi = 1. / np.sqrt(2. * _pi)
 
     def __init__(self, ground_map_left, ground_map_right, particles_count, sigma_obs, prop_uniform, alpha_xy,
-                 alpha_theta):
+                 alpha_theta, state_init=None):
         # sanity check on parameters
         assert ground_map_left.dtype == np.double
         assert ground_map_right.dtype == np.double
@@ -30,8 +30,11 @@ class MonteCarlo:
         self.conf_xy = 3
 
         # create initial particles
-        particles = np.random.uniform(0, 1, size=[particles_count, 3])  # TODO initialize with picture estimated pos.
-        particles = particles * [ground_map_left.shape[0], ground_map_left.shape[1], np.pi * 2]
+        if state_init is None:
+            particles = np.random.uniform(0, 1, size=[particles_count, 3])  # TODO initialize with picture estimated pos.
+            particles = particles * [ground_map_left.shape[0], ground_map_left.shape[1], np.pi * 2]
+        else:
+            particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/10]), size=(particles_count, 3))
         self.particles = particles
         self.weights = np.empty([particles_count])
         self.estimated_particle = np.empty([3], dtype=float)
@@ -125,27 +128,31 @@ class MonteCarlo:
 
         self.particles = particles
 
-    # @jit(nopython=True)
-    def estimate_state(self):
+    @staticmethod
+    @jit(nopython=True)
+    def estimate_state(particles, particles_count, conf_xy, conf_theta):
         # TODO something smarter than the mean, but maybe not as overkill as RANSAC
         # limits for considering participating to the state estimation
         theta_lim = np.radians(5)
         xy_lim = 1.5
 
-        particles = self.particles
-        max_index = particles.shape[0] - 1
+        # particles = self.particles
+        max_index = particles_count - 1
         iterations_count = 500
         tests_count = 500
-        assert iterations_count <= max_index and tests_count <= max_index
+        # assert iterations_count <= max_index and tests_count <= max_index
 
+        # no replacement
+
+        tmp = []
+        for i in range(max_index):
+            tmp.append(i)
+        lin = np.array(tmp)
+        # np.array(np.linspace(0, max_index, max_index + 1), dtype=np.int)
+        iteration_indices = np.random.choice(lin, iterations_count, replace=False)
+        test_indices = np.random.choice(lin, tests_count, replace=False)
         best_index = -1
         support, best_support = 0, 0
-        # no replacement
-        iteration_indices = np.random.choice(np.linspace(0, max_index, max_index + 1, dtype=np.int), iterations_count,
-                                             replace=False)
-        test_indices = np.random.choice(np.linspace(0, max_index, max_index + 1, dtype=np.int), tests_count,
-                                        replace=False)
-
         # tries a certain number of times
         for i in range(iterations_count):
             index = iteration_indices[i]
@@ -173,7 +180,7 @@ class MonteCarlo:
         y = particles[best_index, 1]
         theta = particles[best_index, 2]
 
-        count, conf_count, xs, ys = 0, 0, 0, 0
+        count, conf_count, xs, ys, ths = 0, 0, 0, 0, 0
         sins, coss = [], []
         for j in range(tests_count):
             o_index = test_indices[j]
@@ -185,22 +192,19 @@ class MonteCarlo:
             if dist_xy < xy_lim and dist_theta < theta_lim:
                 sins.append(np.sin(o_theta))
                 coss.append(np.cos(o_theta))
+                # ths += ut.normalize_angle(theta)
                 xs += o_x
                 ys += o_y
                 count += 1
-            if dist_xy < self.conf_xy and dist_theta < self.conf_theta:
+            if dist_xy < conf_xy and dist_theta < conf_theta:
                 conf_count += 1
 
         # assert count > 0, count
 
         x_m = xs / count
         y_m = ys / count
-        theta_m = np.arctan(np.sum(sins) / np.sum(coss))
-        self.estimated_particle[0] = x_m
-        self.estimated_particle[1] = y_m
-        self.estimated_particle[2] = theta_m
-
-        return np.array([x_m, y_m, theta_m, float(conf_count) / float(tests_count)])
+        theta_m = np.arctan2(np.sum(np.asarray(sins)), np.sum(np.asarray(coss)))  # ths / count
+        return np.array([x_m, y_m, theta_m]), float(conf_count) / float(tests_count)
 
         # mean = np.mean(self.particles, axis=0)
         # self.estimated_particle = mean

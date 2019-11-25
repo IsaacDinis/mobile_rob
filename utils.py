@@ -33,7 +33,6 @@ def rot_mat2(angle):
     return np.array([[np.cos(angle), -np.sin(angle)],
                      [np.sin(angle), np.cos(angle)]])
 
-
 @jit
 def xyC2W(pos):
     """ Transform an x or y coordinate in cell coordinates into world coordinates """
