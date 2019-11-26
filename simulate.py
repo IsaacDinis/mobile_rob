@@ -47,8 +47,8 @@ if True:  # TODO calibration of Thymio still to be done
 
 ground_map = np.flipud(mpimg.imread('data\\map-xhalf-yhalf.png').astype(float))
 # mpimg.imread('C:\\Users\\utilisateur\\Documents\\git\\mobile_rob\\data\\map-xhalf-yhalf.png').astype(float))
-imgplot = plt.imshow(np.uint8(ground_map * 255))
-plt.show()
+# imgplot = plt.imshow(np.uint8(ground_map * 255))
+# plt.show()
 
 # load stuff
 vUnitToSensor = np.vectorize(unitToSensor, excluded=[1])
@@ -57,8 +57,8 @@ ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 x = 31
 y = 0
 th = np.pi/2.
-loc = MonteCarlo(ground_map_left, ground_map_right,particles_count=5000, sigma_obs=150., prop_uniform=0., alpha_xy=0.1,
-                 alpha_theta=0.1,  state_init=[x, y, th])
+loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=2000, sigma_obs=150., prop_uniform=0.,
+                 alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, th])
 # %%
 # colonne pour x = 31
 # sensor_values = np.flipud(np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0])) * 1000
@@ -102,14 +102,18 @@ for i in range(25):
     start_time = time.time()
     loc.apply_command(dx_local, dy_local, dth_local)
     loc.apply_obs_and_resample(sensor_left, sensor_right)
-    loc.estimated_particle, confidence = MonteCarlo.estimate_state(loc.particles, loc.particles.shape[0], loc.conf_xy,
-                                                                   loc.conf_theta)
+    loc.estimated_particle, confidence = loc.estimate_state()
     duration = time.time() - start_time
-    loc.dump_PX(save_dir + str(i), gt_x=x, gt_y=y, gt_theta=th)
+    print("Time end of loop = ", duration)
+    time = time.time()
+
+    if True:  # plot or not??
+        loc.dump_PX(save_dir + str(i), gt_x=x, gt_y=y, gt_theta=th)
+        print("duration_plot = ", time.time() - duration)
 
     # ests_x.append(est_x)
     # ests_y.append(est_y)
-    pass
+
 
 # %%
 input("bla")

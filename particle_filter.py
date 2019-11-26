@@ -6,8 +6,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class MonteCarlo:
-    _pi = np.pi
-    _1sqrt2pi = 1. / np.sqrt(2. * _pi)
+    # _pi = np.pi
+    # _1sqrt2pi = 1. / np.sqrt(2. * _pi)
 
     def __init__(self, ground_map_left, ground_map_right, particles_count, sigma_obs, prop_uniform, alpha_xy,
                  alpha_theta, state_init=None):
@@ -39,33 +39,41 @@ class MonteCarlo:
         self.weights = np.empty([particles_count])
         self.estimated_particle = np.empty([3], dtype=float)
 
-    # @jit
     def apply_obs_and_resample(self, left_color, right_color):
+        mapshape = self.ground_map_left.shape
+        self.particles = self._apply_obs_and_resample(self.particles, self.particles.shape[0], self.ground_map_left,
+                                                 self.ground_map_right, self.sigma_obs, self.N_uniform, mapshape,
+                                                 left_color, right_color)
+
+    @staticmethod
+    @jit(nopython=True)
+    def _apply_obs_and_resample(particles, particles_count, ground_map_left, ground_map_right,
+                                sigma_obs, N_uniform, mapshape, left_color, right_color):
         """ Apply observation and update probability weights, then resample"""
-        particles_count = self.particles.shape[0]
-        particles = np.asarray(self.particles)
-        weights = np.empty([particles_count])
+        particles_count = particles_count
+        # particles = np.asarray(particles)
+        weights = np.zeros(particles_count)
         nb_ok = 0
         for i in range(particles_count):
             theta = particles[i, 2]
 
             # compute position of sensors in world coordinates
             rot = ut.rot_mat2(theta)
-            left_sensor_pos = rot.dot([7.2, 1.1]) + particles[i, 0:2]
-            right_sensor_pos = rot.dot([7.2, -1.1]) + particles[i, 0:2]
+            left_sensor_pos = rot.dot(np.array([7.2, 1.1])) + particles[i, 0:2]
+            right_sensor_pos = rot.dot(np.array([7.2, -1.1])) + particles[i, 0:2]
 
-            if not self.is_in_bound(left_sensor_pos) or not self.is_in_bound(right_sensor_pos):
+            if not ut.is_in_bound(mapshape, left_sensor_pos) or not ut.is_in_bound(mapshape, right_sensor_pos):
                 # kill particle if out of map
                 weights[i] = 0.
             else:
                 # otherwise, compute weight in function of ground color
                 # left sensor
-                ground_val_left = self.ground_map_left[ut.xyW2C(left_sensor_pos[0]), ut.xyW2C(left_sensor_pos[1])]
-                left_weight = ut.norm(left_color, ground_val_left, self.sigma_obs)
+                ground_val_left = ground_map_left[ut.xyW2C(left_sensor_pos[0]), ut.xyW2C(left_sensor_pos[1])]
+                left_weight = ut.norm(left_color, ground_val_left, sigma_obs)
 
                 # right sensor
-                ground_val_right = self.ground_map_right[ut.xyW2C(right_sensor_pos[0]), ut.xyW2C(right_sensor_pos[1])]
-                right_weight = ut.norm(right_color, ground_val_right, self.sigma_obs)
+                ground_val_right = ground_map_right[ut.xyW2C(right_sensor_pos[0]), ut.xyW2C(right_sensor_pos[1])]
+                right_weight = ut.norm(right_color, ground_val_right, sigma_obs)
 
                 # compute weight
                 weights[i] = left_weight * right_weight
@@ -78,22 +86,30 @@ class MonteCarlo:
         # print("Proportion of matching particles:", 1. * nb_ok / len(weights))
 
         # Resample
-        resample_count = particles_count - self.N_uniform
-        assert weights.sum() > 0.
+        resample_count = particles_count - N_uniform
+        # assert weights.sum() > 0.
+        if not(weights.sum() > 0.):
+            print("not(weights.sum() > 0.)")
         weights /= weights.sum()
-        self.weights = weights
+        # self.weights = weights
 
-        resampled = particles[np.random.choice(particles_count, resample_count, p=weights)]
-        new_particles = np.random.uniform(0, 1, [self.N_uniform, 3]) * [
-            self.ground_map_left.shape[0], self.ground_map_left.shape[1], np.pi * 2]
+        # resampled = particles[np.random.choice(particles_count, resample_count, p=weights)]
+        # workaround for numba
+        resampled = particles[np.searchsorted(np.cumsum(weights), np.random.random(), side="right")]
+
+        if N_uniform:
+            new_particles = ut.weird(N_uniform, mapshape)
+            particles[resample_count:] = new_particles
         particles[:resample_count] = resampled
-        particles[resample_count:] = new_particles
-        assert particles.shape[0] == particles_count
+
+        # assert particles.shape[0] == particles_count
+        if not(particles.shape[0] == particles_count):
+            print("not(particles.shape[0] == particles_count)")
 
         # add adaptive noise to fight particle depletion
         one_N3 = 1. / pow(particles_count, 1. / 3.)
-        range_x = self.ground_map_left.shape[0] * one_N3
-        range_y = self.ground_map_left.shape[1] * one_N3
+        range_x = mapshape[0] * one_N3
+        range_y = mapshape[1] * one_N3
         range_theta = 2. * np.pi * one_N3
 
         # for i in range(particles_count):
@@ -104,33 +120,46 @@ class MonteCarlo:
         particles[:, 1] += np.random.uniform(-range_y / 2., range_y / 2., particles_count)
         particles[:, 2] += np.random.uniform(-range_theta / 2., range_theta / 2., particles_count)
 
-        self.particles = particles
+        return particles
 
-    # @jit
     def apply_command(self, d_x, d_y, d_theta):
+        self.particles = self._apply_command(self.particles, self.particles.shape[0], self.alpha_theta, self.alpha_xy,
+                                             np.float(d_x), np.float(d_y), d_theta)
+
+    @staticmethod
+    @jit(nopython=True)
+    def _apply_command(particles, particles_count, alpha_theta, alpha_xy, d_x, d_y, d_theta):
         """ Apply command to each particle """
         d_xy = np.array([d_x, d_y])
-        particles = np.asarray(self.particles)
-        particles_count = self.particles.shape[0]
+        particles = np.asarray(particles)
+        particles_count = particles_count
 
         # error model
         norm_xy = np.sqrt(d_x ** 2 + d_y ** 2)
-        e_theta = self.alpha_theta * abs(d_theta) + np.radians(0.25)
-        assert e_theta > 0, e_theta
-        e_xy = self.alpha_xy * norm_xy + 0.01
-        assert e_xy > 0, e_xy
+        e_theta = alpha_theta * abs(d_theta) + np.radians(0.25)
+        # assert e_theta > 0, e_theta
+        if not (e_theta > 0):
+            print("ERROR, e_theta <= 0")
+        e_xy = alpha_xy * norm_xy + 0.01
+        # assert e_xy > 0, e_xy
+        if not e_xy > 0:
+            print("ERROR, e_xy <= 0")
 
         # apply command and sampled noise to each particle
         for i in range(particles_count):
             theta = particles[i, 2]
-            particles[i, 0:2] += ut.rot_mat2(theta).dot(d_xy) + np.random.normal(0, e_xy, [2])
-            particles[i, 2] = theta + d_theta + np.random.normal(0, e_theta)
+            particles[i, 0:2] += ut.rot_mat2(theta).dot(d_xy) + np.random.normal(0., e_xy, 2)
+            particles[i, 2] = theta + d_theta + np.random.normal(0., e_theta)
 
-        self.particles = particles
+        return particles
+
+    def estimate_state(self):
+        return self._estimate_state(self.particles, self.particles.shape[0], self.conf_xy,
+                                    self.conf_theta)
 
     @staticmethod
     @jit(nopython=True)
-    def estimate_state(particles, particles_count, conf_xy, conf_theta):
+    def _estimate_state(particles, particles_count, conf_xy, conf_theta):
         # TODO something smarter than the mean, but maybe not as overkill as RANSAC
         # limits for considering participating to the state estimation
         theta_lim = np.radians(5)
@@ -221,6 +250,7 @@ class MonteCarlo:
 
         for (x, y, theta) in self.particles:
             ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
+        # self._dump_PX(ax, self.particles)
 
         ax.arrow(gt_x, gt_y, np.cos(gt_theta) * 2, np.sin(gt_theta) * 2, head_width=1, head_length=1.2, fc='green',
                  ec='green')
@@ -230,18 +260,9 @@ class MonteCarlo:
 
         canvas.print_figure(base_filename + '.png', dpi=300)
 
-
-    def is_in_bound_cell(self, x, y):
-        """ Return whether a given position x,y (as int) is within the bounds of a 2D array """
-        if 0 <= x < self.ground_map_left.shape[0] and 0 <= y < self.ground_map_left.shape[1]:
-            return True
-        else:
-            return False
-
-    def is_in_bound(self, pos):
-        """ Check whether a given position is within the bounds of a 2D array """
-        assert pos.shape[0] == 2
-        x = ut.xyW2C(pos[0])
-        y = ut.xyW2C(pos[1])
-        return self.is_in_bound_cell(x, y)
+    # @staticmethod  # doesn't work
+    # @jit(nopython=True)
+    # def _dump_PX(ax, particles):
+    #     for (x, y, theta) in particles:
+    #         ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
 
