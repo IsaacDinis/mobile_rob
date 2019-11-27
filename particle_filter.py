@@ -95,11 +95,16 @@ class MonteCarlo:
 
         # resampled = particles[np.random.choice(particles_count, resample_count, p=weights)]
         # workaround for numba
-        resampled = particles[np.searchsorted(np.cumsum(weights), np.random.random(), side="right")]
-
-        if N_uniform:
-            new_particles = ut.weird(N_uniform, mapshape)
-            particles[resample_count:] = new_particles
+        csum = np.cumsum(weights)
+        resampled = np.empty((resample_count, 3))
+        for k in range(resample_count):
+            resampled[k,:] = particles[np.searchsorted(csum, np.random.random(), side="right"), :]
+        # resampled = np.array(tmp)
+        # if N_uniform:
+        #     new_particles = ut.weird(N_uniform, mapshape)
+        #     particles[resample_count:] = new_particles
+        #     particles[:resample_count] = resampled
+        # else:
         particles[:resample_count] = resampled
 
         # assert particles.shape[0] == particles_count
@@ -108,8 +113,8 @@ class MonteCarlo:
 
         # add adaptive noise to fight particle depletion
         one_N3 = 1. / pow(particles_count, 1. / 3.)
-        range_x = mapshape[0] * one_N3
-        range_y = mapshape[1] * one_N3
+        range_x = np.float(mapshape[0]) * one_N3
+        range_y = np.float(mapshape[1]) * one_N3
         range_theta = 2. * np.pi * one_N3
 
         # for i in range(particles_count):
@@ -154,8 +159,14 @@ class MonteCarlo:
         return particles
 
     def estimate_state(self):
-        return self._estimate_state(self.particles, self.particles.shape[0], self.conf_xy,
-                                    self.conf_theta)
+        """ Run the RANSAC algorithm to find the best approximation of the state
+            :return estimated_particle --> np.array(x,y,theta)
+                    confidence --> a percentage
+            """
+        estimated_particle, confidence = self._estimate_state(self.particles, self.particles.shape[0], self.conf_xy,
+                                                              self.conf_theta)
+        self.estimated_particle = estimated_particle
+        return estimated_particle, confidence
 
     @staticmethod
     @jit(nopython=True)
@@ -239,30 +250,43 @@ class MonteCarlo:
         # self.estimated_particle = mean
         # return mean[0], mean[1], mean[2], 42
 
-
-    def dump_PX(self, base_filename, gt_x=-1, gt_y=-1, gt_theta=-1):
+    def plot_state(self, base_filename, gt_x=-1, gt_y=-1, gt_theta=-1,
+                plot_sens_pos=True, map_back=None, num_particles=-1):
         """ Write particles to an image """
         fig = Figure((3, 3), tight_layout=True)
         canvas = FigureCanvas(fig)
         ax = fig.gca()
         ax.set_xlim([0, self.ground_map_left.shape[0]])
         ax.set_ylim([0, self.ground_map_left.shape[1]])
+        x, y, theta = self.estimated_particle
 
-        for (x, y, theta) in self.particles:
-            ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
-        # self._dump_PX(ax, self.particles)
+        if map_back is not None:
+            ax.imshow(np.uint8(map_back * 255))
 
-        ax.arrow(gt_x, gt_y, np.cos(gt_theta) * 2, np.sin(gt_theta) * 2, head_width=1, head_length=1.2, fc='green',
-                 ec='green')
+        if num_particles > 0:
+            idx = np.random.choice(self.particles.shape[0], num_particles)
+            for i in idx:
+                x, y, theta = self.particles[i, :]
+                ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
 
-        ax.arrow(self.estimated_particle[0], self.estimated_particle[1], np.cos(self.estimated_particle[2]) * 2,
-                 np.sin(self.estimated_particle[2]) * 2, head_width=1, head_length=1.2, fc='blue', ec='blue')
+        if gt_x != -1 and gt_y != -1:
+            ax.arrow(gt_x, gt_y, np.cos(gt_theta) * 2, np.sin(gt_theta) * 2, head_width=1, head_length=1.2, fc='green',
+                     ec='green')
+
+        ax.arrow(x, y, np.cos(theta) * 2, np.sin(theta) * 2, head_width=1, head_length=1.2, fc='blue', ec='blue')
+
+        if plot_sens_pos:
+            if gt_x != -1 and gt_y != -1:
+                rot = ut.rot_mat2(gt_theta)
+                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([gt_x, gt_y])
+                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray([gt_x, gt_y])
+            else:
+                rot = ut.rot_mat2(theta)
+                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([x, y])
+                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray([x, y])
+
+            ax.plot(left_sensor_pos[0], left_sensor_pos[1], 'ro', markersize=1)
+            ax.plot(right_sensor_pos[0], right_sensor_pos[1], 'go', markersize=1)
 
         canvas.print_figure(base_filename + '.png', dpi=300)
-
-    # @staticmethod  # doesn't work
-    # @jit(nopython=True)
-    # def _dump_PX(ax, particles):
-    #     for (x, y, theta) in particles:
-    #         ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
 

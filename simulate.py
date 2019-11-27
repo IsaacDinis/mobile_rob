@@ -9,7 +9,7 @@ from particle_filter import *
 import utils as ut
 
 
-# %% support functions
+# support functions
 def sigm(x, s): return 1. / (1. + np.exp(-x * s))
 
 
@@ -24,8 +24,6 @@ def unitToSensor(value, table):
         return table[16]
     return float(table[tableBin]) * (1. - r) + float(table[tableBin + 1]) * r
 
-
-# %% Main
 
 
 if True:  # TODO calibration of Thymio still to be done
@@ -54,26 +52,26 @@ ground_map = np.flipud(mpimg.imread('data\\map-xhalf-yhalf.png').astype(float))
 vUnitToSensor = np.vectorize(unitToSensor, excluded=[1])
 ground_map_left = vUnitToSensor(np.transpose(ground_map), config['left'])  # should be normalized
 ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
-x = 31
+x = 30
 y = 0
-th = np.pi/2.
-loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=2000, sigma_obs=150., prop_uniform=0.,
+th = 3*np.pi/4.
+# setting all the parameters
+loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=100000, sigma_obs=150., prop_uniform=0.,
                  alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, th])
-# %%
-# colonne pour x = 31
-# sensor_values = np.flipud(np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0])) * 1000
 
-# ests_x = []
-# ests_y = []
 
-# remove previous drawings
+# remove previous outputs
 save_dir = "output\\particles_"
 for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
+# dx_local = [1.5]*20
+# dy_local = [0]*20
+# dth_local = [0]*20
 for i in range(25):
+    print("----------------------", i)
     # # odometry
-    dx_local = 3  # float(values[2]) * 0.01 * 0.1 # input to the localizer is in cm
+    dx_local = 1.5  # float(values[2]) * 0.01 * 0.1 # input to the localizer is in cm
     dy_local = 0
     dth_local = 0  # float(values[4]) * math.pi / 32767. # input to the localizer is in radian
 
@@ -85,15 +83,19 @@ for i in range(25):
     left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([x, y])
     right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray([x, y])
 
-    sensor_left = ground_map_left[ut.xyW2C(left_sensor_pos[0]),
-                                  ut.xyW2C(left_sensor_pos[1])]  # input to the localizer is within 0 to 1000
-    sensor_right = ground_map_right[ut.xyW2C(right_sensor_pos[0]),
-                                    ut.xyW2C(right_sensor_pos[1])]  # input to the localizer is within 0 to 1000
+    if ut.is_in_bound(ground_map_left.shape, np.array([x, y])):
+        sensor_left = ground_map_left[ut.xyW2C(left_sensor_pos[0]),
+                                      ut.xyW2C(left_sensor_pos[1])]  # input to the localizer is within 0 to 1000
+        sensor_right = ground_map_right[ut.xyW2C(right_sensor_pos[0]),
+                                        ut.xyW2C(right_sensor_pos[1])]  # input to the localizer is within 0 to 1000
+        print("sensor_left {0:.2f}, sensor_right {1:.2f},".format(sensor_left, sensor_right))
+        print("Real state        x {0:.2f}  y {1:.2f} th {2:.2f}".format(x, y, th))
+    else:
+        print("Coordinates ", x, y, " are out of the map!")
+        exit(1)
 
     # if dx_local != 0.0 or dy_local != 0.0 or dth_local != 0.0:
-    print("sensor_left {0:.2f}, sensor_right {1:.2f}, x{2:.2f}, y{3:.2f}".format(sensor_left, sensor_right, x, y))
-    print(["{:0.2f}".format(x) for x in loc.estimated_particle])
-    print("----------------", i)
+
 
     # odom_plot.set_xdata(numpy.append(odom_plot.get_xdata(), x))
     # odom_plot.set_ydata(numpy.append(odom_plot.get_ydata(), y))
@@ -102,18 +104,20 @@ for i in range(25):
     start_time = time.time()
     loc.apply_command(dx_local, dy_local, dth_local)
     loc.apply_obs_and_resample(sensor_left, sensor_right)
-    loc.estimated_particle, confidence = loc.estimate_state()
+    estimated_particle, confidence = loc.estimate_state()
     duration = time.time() - start_time
-    print("Time end of loop = ", duration)
-    time = time.time()
 
-    if True:  # plot or not??
-        loc.dump_PX(save_dir + str(i), gt_x=x, gt_y=y, gt_theta=th)
-        print("duration_plot = ", time.time() - duration)
+    print("Estimated state: ", ["{:0.2f}".format(x) for x in loc.estimated_particle])
+    print("Confidence:", confidence)
+
+    print("Duration algo: {} ms".format(round(1000*duration)))
+    start_time = time.time()
+
+    if True:  # plot or not
+        loc.plot_state(save_dir + str(i), gt_x=x, gt_y=y, gt_theta=th,
+                    plot_sens_pos=True, map_back=ground_map, num_particles=500)
+        print("Duration plot: {} ms".format(round(1000*(time.time()-start_time))))
 
     # ests_x.append(est_x)
     # ests_y.append(est_y)
 
-
-# %%
-input("bla")
