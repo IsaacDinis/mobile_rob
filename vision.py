@@ -1,30 +1,25 @@
 import cv2
 import numpy as np
+import enum
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+colors = ["blue", "red", "yellow", "green"]
 
 
-def red_detection(frame):
+def color_detection(frame, color):
+
+    with open("color_calibration.txt", "r") as text_file:  # get mask values from file
+        lines = text_file.read().splitlines()
+        line = lines[colors.index(color)]
+        line = list(map(int, line.split(' ')))  # converts str to int
+        lower_red = np.array(line[0:3])
+        upper_red = np.array(line[3:6])
+
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    lower_red = np.array([-30, 50, 50])
-    upper_red = np.array([30, 255, 255])
-
     mask = cv2.inRange(hsv, lower_red, upper_red)
     res = cv2.bitwise_and(frame, frame, mask=mask)
     res = cv2.medianBlur(res, 15)
-    return res
 
-
-def blue_detection(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    lower_blue = np.array([35, 140, 60])
-    upper_blue = np.array([255, 255, 180])
-
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
-    res = cv2.bitwise_and(frame, frame, mask=mask)
-    #res = cv2.medianBlur(res, 15)
     return res
 
 
@@ -46,7 +41,7 @@ def corner_detection(frame):
 
 def get_map_corners(corners):
     rect = np.zeros((4, 2), dtype="float32")
-    corners = corners.reshape([corners.shape[0], 2])
+    corners = corners.reshape([corners.shape[0], 2])  # 3d matrix to 2d
 
     s = corners.sum(axis=1)
     rect[0] = corners[s.argmin()]
@@ -75,7 +70,6 @@ def map_projection(frame,rect):
         [maxWidth - 1, maxHeight - 1],
         [0, maxHeight - 1]], dtype="float32")
 
-
     # compute the perspective transform matrix and then apply it
     m = cv2.getPerspectiveTransform(rect, dst)
     warped = cv2.warpPerspective(frame, m, (maxWidth, maxHeight))
@@ -86,8 +80,8 @@ def map_projection(frame,rect):
 
 while 1:
     _, frame = cap.read()
-    red = red_detection(frame)
-    blue = blue_detection(frame)
+    red = color_detection(frame, 'red')
+    blue = color_detection(frame, 'blue')
     '''
     edge = edge_detection(frame)
     corners = corner_detection(frame)
