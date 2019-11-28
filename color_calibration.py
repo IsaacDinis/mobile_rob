@@ -6,11 +6,11 @@ def nothing(x):
     pass
 
 
-open('color_calibration.txt', 'w').close()  # clear file
+open('color_calibration.txt', 'w+').close()  # clear file
 colors = ["blue", "red", "yellow", "green"]
 i = 0
 
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)
 cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)

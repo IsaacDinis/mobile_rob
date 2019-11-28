@@ -17,10 +17,22 @@ def color_detection(frame, color):
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower_red, upper_red)
+    mask = cv2.medianBlur(mask, 15)
     res = cv2.bitwise_and(frame, frame, mask=mask)
-    res = cv2.medianBlur(res, 15)
+    #res = cv2.medianBlur(res, 15)
 
-    return res
+    return res, mask
+
+
+def detect_obstacles(frame):
+    _, mask = color_detection(frame, 'yellow')
+    apr_contours = list()
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    for cnt in contours:
+        cnt = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        apr_contours.append(cnt)
+    return apr_contours
 
 
 def edge_detection(frame):
@@ -80,8 +92,9 @@ def map_projection(frame,rect):
 
 while 1:
     _, frame = cap.read()
-    red = color_detection(frame, 'red')
-    blue = color_detection(frame, 'blue')
+    #  red = color_detection(frame, 'red')
+    #blue, _ = color_detection(frame, 'blue')
+    contours = detect_obstacles(frame)
     '''
     edge = edge_detection(frame)
     corners = corner_detection(frame)
@@ -99,9 +112,13 @@ while 1:
             rect_int = np.int0(rect)
             cv2.circle(frame, (rect_int[i, 0], rect_int[i, 1]), 5, (0, 0, 255), -1)
     '''
+    for contour in contours:
+        cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+
     cv2.imshow('frame', frame)
-    cv2.imshow('red', red)
-    cv2.imshow('blue', blue)
+    # cv2.imshow('red', red)
+    # cv2.imshow('blue', blue)
+
     '''
     cv2.imshow('edge', edge)
     if rect.shape[0]==4:
