@@ -1,0 +1,75 @@
+<!DOCTYPE aesl-source>
+<network>
+
+
+<!--list of global events-->
+
+
+<!--list of constants-->
+<constant value="80" name="MAX_SPEED"/>
+<constant value="270" name="SPEED_COEF"/>
+<constant value="9500" name="BASE_WIDTH"/>
+
+
+<!--show keywords state-->
+<keywords flag="true"/>
+
+
+<!--node thymio-II-->
+<node nodeId="4378" name="thymio-II">var forward_speed = 0
+var rot_speed = 0
+
+var ground_values_counter = 0
+
+
+var temp var dx var dy
+var dsl var dsr var ds var dth
+
+
+# odometry
+event.args[0] = 0
+event.args[1] = 0
+event.args[2] = 0
+event.args[3] = 0
+# disable ground leds
+call leds.prox.v(0,0)
+
+#motor.right.target=80
+
+onevent motor
+# odometry
+
+# BASE_WIDTH = 95     # millimeters
+# SPEED_COEF = 2.93   # 1mm/sec corresponds to X units of real thymio speed
+
+# number of linear 1/100 of mm
+call math.muldiv(dsl, motor.left.speed, 100, SPEED_COEF)
+call math.muldiv(dsr, motor.right.speed, 100, SPEED_COEF)
+# robot traveled distance in 1/100 of mm
+ds = (dsl + dsr) / 2
+# turn in aseba angle
+call math.atan2(dth, dsr-dsl, BASE_WIDTH)
+# temporary odometry
+call math.cos(temp, (event.args[3] + dth)/2)
+call math.muldiv(dx, ds, temp, 32767)
+call math.sin(temp, (event.args[3] + dth)/2)
+call math.muldiv(dy, ds, temp, 32767)
+event.args[1] += dx
+event.args[2] += dy
+event.args[3] += dth
+
+onevent button.forward
+motor.left.target=80
+motor.right.target=80
+onevent button.right
+motor.left.target=80
+motor.right.target=0
+onevent button.left
+motor.left.target=0
+motor.right.target=80
+onevent button.backward
+motor.left.target=0
+motor.right.target=0</node>
+
+
+</network>
