@@ -48,6 +48,13 @@ while True:
         i += 1
         with open("color_calibration.txt", "a") as text_file:
             print(f"{l_h} {l_s} {l_v} {u_h} {u_s} {u_v}", file=text_file)
+            cv2.setTrackbarPos("L - H", "Trackbars", 0)
+            cv2.setTrackbarPos("L - S", "Trackbars", 0)
+            cv2.setTrackbarPos("L - V", "Trackbars", 0)
+            cv2.setTrackbarPos("U - H", "Trackbars", 179)
+            cv2.setTrackbarPos("U - S", "Trackbars", 255)
+            cv2.setTrackbarPos("U - V", "Trackbars", 255)
+
         if i == len(colors):
             break
         else:

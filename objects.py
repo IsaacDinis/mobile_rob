@@ -60,14 +60,14 @@ class Thymio:
         if circles[0, 2] < circles[1, 2]:
             self.pos.x = circles[1, 0]
             self.pos.y = circles[1, 1]
-            self.orientation = self._calculate_orientation(circles[0])
+            self.theta = self._calculate_orientation(circles[0])
         else:
             self.pos.x = circles[0, 0]
             self.pos.y = circles[0, 1]
-            self.orientation = self._calculate_orientation(circles[1])
+            self.theta = self._calculate_orientation(circles[1])
 
     def _calculate_orientation(self, circle):
-        v = [circle[0]-self.pos.x-circle[1]- self.pos.y]
+        v = [circle[0]-self.pos.x, circle[1]-self.pos.y]
         v = v / np.linalg.norm(v)  # normalize the vector
         e = [1, 0]
         angle = np.sign(v[1])*np.arccos(np.clip(np.dot(v, e), -1.0, 1.0))

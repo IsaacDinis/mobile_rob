@@ -27,10 +27,12 @@ def color_detection(frame, color):
 
 
 def draw_thymio(frame, thymio):
-    r = 10.0
-    theta = thymio.angle
-    pt1 = [thymio.pos.x, -thymio.pos.y]
+    r = 200.0
+    theta = thymio.theta
+    pt1 = [thymio.pos.x, thymio.pos.y]
     pt2 = [pt1[0]+r*math.cos(theta), pt1[1]+r*math.sin(theta)]
+    pt1 = tuple(map(int, pt1))
+    pt2 = tuple(map(int, pt2))
     cv2.arrowedLine(frame, pt1, pt2, (0, 0, 255), 5)
 
 
@@ -39,6 +41,7 @@ def detect_thymio(frame):
     if circles is not None and circles.shape[1] == 2:
         circles = circles.squeeze()
         thymio = Thymio(circles)
+        draw_thymio(frame, thymio)
 
     else:
         print("thymio not found")
@@ -49,7 +52,7 @@ def detect_circles(frame):
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #gray = cv2.medianBlur(gray, 7)
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 40, param1=50, param2=25, minRadius=0, maxRadius=0)
+    circles = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, 1.5, 250, param1=50, param2=30, minRadius=0, maxRadius=0)
     return circles
 
 
