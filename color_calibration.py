@@ -10,7 +10,7 @@ open('color_calibration.txt', 'w+').close()  # clear file
 colors = ["blue", "red", "yellow", "green"]
 i = 0
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)
 cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)
@@ -34,6 +34,7 @@ while True:
     lower_color = np.array([l_h, l_s, l_v])
     upper_color = np.array([u_h, u_s, u_v])
     mask = cv2.inRange(hsv, lower_color, upper_color)
+    mask = cv2.medianBlur(mask, 5)
     result = cv2.bitwise_and(frame, frame, mask=mask)
 
     image = cv2.putText(result, text, (15, 15), cv2.FONT_HERSHEY_SIMPLEX,

@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
-import enum
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+from objects import *
+import math
+
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 colors = ["blue", "red", "yellow", "green"]
 
@@ -24,13 +26,40 @@ def color_detection(frame, color):
     return res, mask
 
 
+def draw_thymio(frame, thymio):
+    r = 10.0
+    theta = thymio.angle
+    pt1 = [thymio.pos.x, -thymio.pos.y]
+    pt2 = [pt1[0]+r*math.cos(theta), pt1[1]+r*math.sin(theta)]
+    cv2.arrowedLine(frame, pt1, pt2, (0, 0, 255), 5)
+
+
+def detect_thymio(frame):
+    circles = detect_circles(frame)
+    if circles is not None and circles.shape[1] == 2:
+        circles = circles.squeeze()
+        thymio = Thymio(circles)
+
+    else:
+        print("thymio not found")
+
+
+def detect_circles(frame):
+    frame, mask = color_detection(frame, 'green')
+    frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.medianBlur(gray, 7)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 40, param1=50, param2=25, minRadius=0, maxRadius=0)
+    return circles
+
+
 def detect_obstacles(frame):
     _, mask = color_detection(frame, 'yellow')
     apr_contours = list()
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     for cnt in contours:
-        cnt = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        cnt = cv2.approxPolyDP(cnt, 0.1*cv2.arcLength(cnt, True), True)
         apr_contours.append(cnt)
     return apr_contours
 
@@ -93,8 +122,9 @@ def map_projection(frame,rect):
 while 1:
     _, frame = cap.read()
     #  red = color_detection(frame, 'red')
-    #blue, _ = color_detection(frame, 'blue')
-    contours = detect_obstacles(frame)
+    blue, _ = color_detection(frame, 'blue')
+    #  contours = detect_obstacles(frame)
+    # contour = detect_thymio(frame)
     '''
     edge = edge_detection(frame)
     corners = corner_detection(frame)
@@ -112,12 +142,20 @@ while 1:
             rect_int = np.int0(rect)
             cv2.circle(frame, (rect_int[i, 0], rect_int[i, 1]), 5, (0, 0, 255), -1)
     '''
-    for contour in contours:
-        cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+    # for contour in contours:
+    # if len(contour):
+    #     cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
+    detect_thymio(frame)
+    circles = detect_circles(frame)
+    if circles is not None:
+        detected_circles = np.uint16(np.around(circles))
+        for (x, y, r) in detected_circles[0, :]:
+            cv2.circle(frame, (x, y), r, (0, 0, 0), 3)
+            cv2.circle(frame, (x, y), 2, (0, 255, 255), 3)
 
     cv2.imshow('frame', frame)
     # cv2.imshow('red', red)
-    # cv2.imshow('blue', blue)
+    cv2.imshow('blue', blue)
 
     '''
     cv2.imshow('edge', edge)
@@ -125,10 +163,12 @@ while 1:
         warped = map_projection(frame, rect)
         cv2.imshow('warped', warped)
     '''
+
+
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
 
 cv2.destroyAllWindows()
 cap.release()
-exit()
+#exit()
