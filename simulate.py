@@ -52,32 +52,44 @@ ground_map = np.flipud(mpimg.imread('data\\map-xhalf-yhalf.png').astype(float))
 vUnitToSensor = np.vectorize(unitToSensor, excluded=[1])
 ground_map_left = vUnitToSensor(np.transpose(ground_map), config['left'])  # should be normalized
 ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
+
+
 x = 30
 y = 0
 th = 3*np.pi/4.
+alpha_theta = 0.1
+alpha_xy = 0.1
 # setting all the parameters
 loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=100000, sigma_obs=150., prop_uniform=0.,
-                 alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, th])
-
+                 alpha_xy=alpha_xy, alpha_theta=alpha_theta,  state_init=[x, y, th])
 
 # remove previous outputs
 save_dir = "output\\particles_"
 for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
-# dx_local = [1.5]*20
-# dy_local = [0]*20
-# dth_local = [0]*20
-for i in range(25):
+a, b, c = 7, 2, 15
+dxs = [3.]*a + [0.]*b + [3.]*c
+dys = [0.]*a + [0.]*b + [0.]*c
+dths = [0.]*a + [-np.pi/4.]*b + [0.]*c
+
+for i in range(a + b + c):
     print("----------------------", i)
-    # # odometry
-    dx_local = 1.5  # float(values[2]) * 0.01 * 0.1 # input to the localizer is in cm
-    dy_local = 0
-    dth_local = 0  # float(values[4]) * math.pi / 32767. # input to the localizer is in radian
+    # # odometry    dx_local = dxs[i]  # float(values[2]) * 0.01 * 0.1 # input to the localizer is in cm
+    dy_local = dys[i]
+    dth_local = dths[i]  # float(values[4]) * math.pi / 32767. # input to the localizer is in radian:
 
     x += dx_local * np.cos(th) - dy_local * np.sin(th)
     y += dx_local * np.sin(th) + dy_local * np.cos(th)
     th += dth_local
+
+    if True:  # odometry noise on?
+        norm_xy = np.sqrt(dx_local ** 2 + dy_local ** 2)
+        e_theta = alpha_theta * abs(dth_local) + np.radians(0.25)
+        e_xy = alpha_xy * norm_xy + 0.01
+        x += float(np.random.normal(0., e_xy, 1))
+        y += float(np.random.normal(0., e_xy, 1))
+        th += float(np.random.normal(0., e_theta, 1))
 
     rot = ut.rot_mat2(th)
     left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([x, y])

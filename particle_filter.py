@@ -3,6 +3,7 @@ from numba import jit
 import utils as ut
 
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class MonteCarlo:
@@ -178,8 +179,8 @@ class MonteCarlo:
 
         # particles = self.particles
         max_index = particles_count - 1
-        iterations_count = 500
-        tests_count = 500
+        iterations_count = 1000  # 500
+        tests_count = 1000  # 500
         # assert iterations_count <= max_index and tests_count <= max_index
 
         # no replacement
@@ -250,7 +251,7 @@ class MonteCarlo:
         # self.estimated_particle = mean
         # return mean[0], mean[1], mean[2], 42
 
-    def plot_state(self, base_filename, gt_x=-1, gt_y=-1, gt_theta=-1,
+    def plot_state(self, base_filename=None, gt_x=-1, gt_y=-1, gt_theta=-1,
                 plot_sens_pos=True, map_back=None, num_particles=-1):
         """ Write particles to an image """
         fig = Figure((3, 3), tight_layout=True)
@@ -288,5 +289,8 @@ class MonteCarlo:
             ax.plot(left_sensor_pos[0], left_sensor_pos[1], 'ro', markersize=1)
             ax.plot(right_sensor_pos[0], right_sensor_pos[1], 'go', markersize=1)
 
-        canvas.print_figure(base_filename + '.png', dpi=300)
-
+        if base_filename is not None:
+            canvas.print_figure(base_filename + '.png', dpi=300)
+        else:
+            # ax.imshow()
+            fig.show()

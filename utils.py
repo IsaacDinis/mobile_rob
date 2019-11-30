@@ -5,9 +5,9 @@ from numba import jit
 # Utils ------------------------------------
 @jit(nopython=True)
 def norm(x, u, s):
-    factor = 1./ (s * np.sqrt(2*np.pi))
+    factor = 1. / (s * np.sqrt(2.*np.pi))
     dxus = (x - u) / s
-    return factor * np.exp(- dxus ** 2 / 2.)
+    return factor * np.exp(- dxus ** 2. / 2.)
 
 
 @jit(nopython=True)
