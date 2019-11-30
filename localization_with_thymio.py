@@ -33,7 +33,7 @@ map_file = 'data\\mapA3.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio.serial(port="COM14", refreshing_rate=0.1)
+thymio = Thymio.serial(port="COM21", refreshing_rate=0.1)
 
 if True:  # TODO calibration of Thymio still to be done
     # ... generate configuration on the fly

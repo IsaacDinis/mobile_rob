@@ -123,7 +123,7 @@ class Message:
             self.bc_offset, offset = self.get_uint16(offset)
             val = []
             for i in range(4, len(self.payload), 2):
-                instr, offset = get_uint16(offset)
+                instr, offset = self.get_uint16(offset)
                 val.append(instr)
             self.bc = val
         elif (self.id == Message.ID_BREAKPOINT_CLEAR_ALL or
@@ -147,7 +147,7 @@ class Message:
             self.var_offset, offset = self.get_uint16(offset)
             val = []
             for i in range(4, len(self.payload), 2):
-                v, offset = get_uint16(offset)
+                v, offset = self.get_uint16(offset)
                 val.append(v)
             self.var_val = val
         elif self.id == Message.ID_LIST_NODES:
@@ -273,10 +273,10 @@ class RemoteNode:
         self.node_name = None
         # hardcoded for our needs
         # corespond to event.args[0-->3]
-        self.var_total_size = 3
+        self.var_total_size = 0
         self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4}
         self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1}
-        self.var_data = [0]*3
+        self.var_data = []
 
     def add_var(self, name, size):
         """Add the definition of a variable.
