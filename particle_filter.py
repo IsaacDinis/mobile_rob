@@ -32,19 +32,20 @@ class MonteCarlo:
 
         # create initial particles
         if state_init is None:
-            particles = np.random.uniform(0, 1, size=[particles_count, 3])  # TODO initialize with picture estimated pos.
+            particles = np.random.uniform(0, 1, size=[particles_count, 3])
             particles = particles * [ground_map_left.shape[0], ground_map_left.shape[1], np.pi * 2]
         else:
             particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/10]), size=(particles_count, 3))
         self.particles = particles
-        self.weights = np.empty([particles_count])
-        self.estimated_particle = np.empty([3], dtype=float)
+        self.weights = np.zeros(particles_count)
+        self.estimated_particle = np.zeros_like(particles, dtype=float)
 
     def apply_obs_and_resample(self, left_color, right_color):
         mapshape = self.ground_map_left.shape
-        self.particles = self._apply_obs_and_resample(self.particles, self.particles.shape[0], self.ground_map_left,
-                                                 self.ground_map_right, self.sigma_obs, self.N_uniform, mapshape,
-                                                 left_color, right_color)
+        self.particles, self.weights = self._apply_obs_and_resample(self.particles, self.particles.shape[0],
+                                                                    self.ground_map_left, self.ground_map_right,
+                                                                    self.sigma_obs, self.N_uniform, mapshape,left_color,
+                                                                    right_color)
 
     @staticmethod
     @jit(nopython=True)
@@ -77,7 +78,7 @@ class MonteCarlo:
                 right_weight = ut.norm(right_color, ground_val_right, sigma_obs)
 
                 # compute weight
-                weights[i] = left_weight * right_weight
+                weights[i] = left_weight * right_weight  # + 1e-6
 
             # update matching particles
             if weights[i] > 0.5:
@@ -90,7 +91,8 @@ class MonteCarlo:
         resample_count = particles_count - N_uniform
         # assert weights.sum() > 0.
         if not(weights.sum() > 0.):
-            print("not(weights.sum() > 0.)")
+            print("not(weights.sum() > 0.):", weights.sum())
+            print(weights / weights.sum())
         weights /= weights.sum()
         # self.weights = weights
 
@@ -110,7 +112,7 @@ class MonteCarlo:
 
         # assert particles.shape[0] == particles_count
         if not(particles.shape[0] == particles_count):
-            print("not(particles.shape[0] == particles_count)")
+            print("Assert failure: not(particles.shape[0] == particles_count)")
 
         # add adaptive noise to fight particle depletion
         one_N3 = 1. / pow(particles_count, 1. / 3.)
@@ -118,15 +120,11 @@ class MonteCarlo:
         range_y = np.float(mapshape[1]) * one_N3
         range_theta = 2. * np.pi * one_N3
 
-        # for i in range(particles_count):
-        #     particles[i, 0] += np.random.uniform(-range_x / 2., range_x / 2.)
-        #     particles[i, 1] += np.random.uniform(-range_y / 2., range_y / 2.)
-        #     particles[i, 2] += np.random.uniform(-range_theta / 2., range_theta / 2.)
         particles[:, 0] += np.random.uniform(-range_x / 2., range_x / 2., particles_count)
         particles[:, 1] += np.random.uniform(-range_y / 2., range_y / 2., particles_count)
         particles[:, 2] += np.random.uniform(-range_theta / 2., range_theta / 2., particles_count)
 
-        return particles
+        return particles, weights
 
     def apply_command(self, d_x, d_y, d_theta):
         self.particles = self._apply_command(self.particles, self.particles.shape[0], self.alpha_theta, self.alpha_xy,

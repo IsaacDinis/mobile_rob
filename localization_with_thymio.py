@@ -26,14 +26,18 @@ def read_and_reset_odometry(thymio):
     sensors = thymio["prox.ground.delta"]
     table = thymio["event.args"]
     dx, dy, dtheta = table[0:3]
+    if dx > 2**15:
+        dx -= 2**16
+    if dy > 2**15:
+        dy -= 2**16
     thymio.reset_odom = True
-    return sensors[0], sensors[1], dx/1000, dy/1000, dtheta * np.pi/3767
+    return sensors[0], sensors[1], dx/1000, dy/1000, dtheta * np.pi/2**15
 
 map_file = 'data\\mapA3.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio.serial(port="COM21", refreshing_rate=0.1)
+thymio = Thymio.serial(port="COM20", refreshing_rate=0.1)
 
 if True:  # TODO calibration of Thymio still to be done
     # ... generate configuration on the fly
@@ -56,12 +60,12 @@ vUnitToSensor = np.vectorize(unitToSensor, excluded=[1])
 ground_map_left = vUnitToSensor(np.transpose(ground_map), config['left'])  # should be normalized
 ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 
-x = 3.
+x = 6.
 y = 3.
-theta = np.pi/4.
+theta = np.pi/2.
 
 # setting all the parameters
-loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=100000, sigma_obs=150., prop_uniform=0.,
+loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=200000, sigma_obs=150., prop_uniform=0.05,
                  alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, theta])
 
 # remove previous outputs
@@ -76,7 +80,7 @@ time.sleep(7)
 # thymio.set_var("motor.left.target", 80)
 # thymio.set_var("motor.right.target", 80)
 # with:
-i = 0
+i = 1
 while True:
 
     if time.time() - start_time > T:
@@ -99,7 +103,7 @@ while True:
         plot_time = time.time()
 
         if True:  # plot or not
-            loc.plot_state(base_filename=save_dir+str(i),plot_sens_pos=True, map_back=ground_map, num_particles=50)
+            loc.plot_state(base_filename=save_dir+str(i), plot_sens_pos=True, map_back=ground_map, num_particles=50)
             print("Duration plot: {} ms".format(round(1000 * (time.time() - plot_time))))
 
         i += 1
