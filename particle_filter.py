@@ -38,7 +38,7 @@ class MonteCarlo:
             particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/10]), size=(particles_count, 3))
         self.particles = particles
         self.weights = np.zeros(particles_count)
-        self.estimated_particle = np.zeros_like(particles, dtype=float)
+        self.estimated_particle = np.zeros_like(particles[0, :], dtype=float)
 
     def apply_obs_and_resample(self, left_color, right_color):
         mapshape = self.ground_map_left.shape
@@ -177,8 +177,8 @@ class MonteCarlo:
 
         # particles = self.particles
         max_index = particles_count - 1
-        iterations_count = 1000  # 500
-        tests_count = 1000  # 500
+        iterations_count = round(particles_count/1000)  # 500
+        tests_count = round(particles_count/1000)  # 500
         # assert iterations_count <= max_index and tests_count <= max_index
 
         # no replacement
