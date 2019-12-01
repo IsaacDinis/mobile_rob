@@ -6,11 +6,18 @@ def nothing(x):
     pass
 
 
+use_image = True
+
+
 open('color_calibration.txt', 'w+').close()  # clear file
-colors = ["blue", "red", "yellow", "green"]
+colors = ["blue", "red", "pink", "green"]
 i = 0
 
-cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
+if use_image:
+    frame = cv2.imread("map_test.PNG")
+else:
+    cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
+
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)
 cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)
@@ -23,7 +30,8 @@ text = "set {} detection, press space when done".format(colors[0])
 print(text)
 
 while True:
-    _, frame = cap.read()
+    if not use_image:
+        _, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     l_h = cv2.getTrackbarPos("L - H", "Trackbars")
     l_s = cv2.getTrackbarPos("L - S", "Trackbars")
@@ -63,6 +71,6 @@ while True:
 
     if key == 27:  # esc pressed
         break
-
-cap.release()
+if not use_image:
+    cap.release()
 cv2.destroyAllWindows()
