@@ -1,0 +1,48 @@
+<!DOCTYPE aesl-source>
+<network>
+
+
+<!--list of global events-->
+
+
+<!--list of constants-->
+<constant value="80" name="MAX_SPEED"/>
+<constant value="270" name="SPEED_COEF"/>
+<constant value="9500" name="BASE_WIDTH"/>
+
+
+<!--show keywords state-->
+<keywords flag="true"/>
+
+
+<!--node thymio-II-->
+<node nodeId="4378" name="thymio-II">var i
+
+# odometry
+
+event.args[0] = 0
+event.args[1] = 0
+# disable ground leds
+call leds.prox.v(0,0)
+call leds.temperature(0,0)
+
+	
+onevent button.backward
+	i = 0
+	event.args = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+	call leds.top(0,0,0)
+onevent button.center
+	if button.center == 1 then
+		if i &lt;=30  then
+			call leds.top(0,255,0)
+			event.args[i] = prox.ground.delta[0]
+			event.args[i+1] = prox.ground.delta[1]
+			i = i + 2
+		else
+			call leds.top(255,0,0)
+		end
+		
+	end</node>
+
+
+</network>

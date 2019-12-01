@@ -1,0 +1,105 @@
+<!DOCTYPE aesl-source>
+<network>
+
+
+<!--list of global events-->
+
+
+<!--list of constants-->
+<constant value="10750" name="TIME_2PI_RIGHT"/>
+<constant value="11300" name="TIME_2PI_LEFT"/>
+<constant value="0" name="STOP"/>
+<constant value="7400" name="TIME_20_CM"/>
+
+
+<!--show keywords state-->
+<keywords flag="true"/>
+
+
+<!--node thymio-II-->
+<node nodeId="4378" name="thymio-II">var i
+var tmp
+
+# odometry
+timer.period = [0,0]
+
+event.args[0] = 0
+event.args[1] = 0
+event.args[10] = 0 # rotation angle
+event.args[11] = 0  # distance
+event.args[12] = 0  # 1 = Accept angle command, 2 = accept line command, 0 = don't accept precise command
+# disable ground leds
+call leds.prox.v(0,0)
+call leds.temperature(0,0)
+
+
+onevent motor # odometry
+	if  i%2 == 0 then
+		event.args[0] = event.args[0] + motor.left.speed
+		event.args[1] = event.args[1] + motor.right.speed
+	end
+	i = i+1
+	if event.args[12] == 1 then
+		callsub turn_angle
+	elseif event.args[12] == 2 then
+		callsub go_straight_distance
+	end
+	
+	
+sub turn_angle
+	if event.args[10] > 0 then
+		motor.left.target=-80
+		motor.right.target=80
+		call math.muldiv(tmp, event.args[10], TIME_2PI_LEFT, 32767)
+		timer.period[0] = tmp
+	elseif event.args[10] &lt; 0 then
+		motor.left.target=80
+		motor.right.target=-80
+		call math.muldiv(tmp, -event.args[10], TIME_2PI_RIGHT, 32767)
+		timer.period[0] = tmp
+	end
+	
+sub go_straight_distance
+	if event.args[11] > 0 then
+		motor.left.target=80
+		motor.right.target=80
+		call math.muldiv(tmp, event.args[11], TIME_20_CM, 32767)
+		timer.period[0] = tmp
+	elseif event.args[11] &lt; 0 then
+		motor.left.target=-80
+		motor.right.target=-80
+		call math.muldiv(tmp, -event.args[11], TIME_20_CM, 32767)
+		timer.period[0] = tmp
+	end
+	
+onevent timer0
+	motor.left.target=0
+	motor.right.target=0
+	timer.period[0] = 0
+	event.args[12] = 0
+	
+#onevent timer1
+#	motor.left.target=0
+#	motor.right.target=0
+#	timer.period[1] = 0
+	
+onevent button.forward
+	motor.left.target=80
+	motor.right.target=80
+onevent button.right
+	motor.left.target=80
+	motor.right.target=-80
+	#call math.muldiv(tmp, event.args[10], TIME_2PI_RIGHT, 32767)
+	#timer.period[0] = tmp
+onevent button.left
+	motor.left.target=-80
+	motor.right.target=80
+	#call math.muldiv(tmp, event.args[10], TIME_2PI_LEFT, 32767)
+	#timer.period[0] = tmp
+onevent button.backward
+	motor.left.target=0
+	motor.right.target=0
+	timer.period[0] = 0</node>
+
+
+</network>

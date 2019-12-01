@@ -277,8 +277,10 @@ class RemoteNode:
         # hardcoded for our needs
         # corespond to event.args[0-->3]
         self.var_total_size = 0
-        self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4, "dist_left": 2, "dist_right": 3}
-        self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1, "dist_left": 1, "dist_right": 1}
+        self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4, "dist_left": 2, "dist_right": 3,
+                           "angle_set": 12, "dist_set": 13, "movement_mode": 14}
+        self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1, "dist_left": 1, "dist_right": 1,
+                         "angle_set": 1, "dist_set": 1, "movement_mode": 1}
         self.var_data = []
 
     def add_var(self, name, size):
