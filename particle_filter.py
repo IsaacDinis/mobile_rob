@@ -35,7 +35,7 @@ class MonteCarlo:
             particles = np.random.uniform(0, 1, size=[particles_count, 3])
             particles = particles * [ground_map_left.shape[0], ground_map_left.shape[1], np.pi * 2]
         else:
-            particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/5]), size=(particles_count, 3))
+            particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/20]), size=(particles_count, 3))
         self.particles = particles
         self.weights = np.zeros(particles_count)
         self.estimated_particle = np.zeros_like(particles[0, :], dtype=float)
@@ -93,7 +93,9 @@ class MonteCarlo:
         if not(weights.sum() > 0.):
             print("not(weights.sum() > 0.):", weights.sum())
             print(weights / weights.sum())
-        weights /= weights.sum()
+            weights += 1e-10
+        else:
+            weights /= weights.sum()
         # self.weights = weights
 
         # resampled = particles[np.random.choice(particles_count, resample_count, p=weights)]

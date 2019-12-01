@@ -5,6 +5,7 @@
 
 import threading
 import numpy as np
+import time
 
 
 class Message:
@@ -306,6 +307,7 @@ class RemoteNode:
     def set_var(self, name, val, index=0):
         """Set the value of a scalar variable or an item in an array variable.
         """
+
         self.var_data[self.var_offset[name] + index] = val
 
     def set_var_array(self, name, val):
@@ -325,8 +327,10 @@ class Thymio:
     """
 
     def __init__(self, io, node_id=1, refreshing_rate=None):
-        self.debug_odom = []
+        self.deltas_and_time = []  # debug
+        self.start_t = 0.
         self.delta_x, self.delta_y, self.delta_th = 0., 0., 0.
+        self.past_dl, self.past_dr = 0., 0.
 
         self.terminating = False
         self.io = io
@@ -406,16 +410,21 @@ class Thymio:
         base_width = 9.5  # cm
         dl *= cm_thunit_l
         dr *= cm_thunit_r
+        dl -= self.past_dl
+        dr -= self.past_dr
+        self.past_dl += dl
+        self.past_dr += dr
+
         dth = np.arctan2(dr - dl, base_width)
         d = (dl + dr) / 2.
 
-        tmp = np.cos((self.delta_th + dth) / 2.)
-        dx = d * tmp
-        tmp = np.sin((self.delta_th + dth) / 2.)
-        dy = d * tmp
+        dx = d * np.cos(self.delta_th + dth/2.)
+        dy = d * np.sin(self.delta_th + dth/2.)
         self.delta_x += dx
         self.delta_y += dy
         self.delta_th += dth
+        self.deltas_and_time.append("{:6.2f} {:6.2f}".format(dx, self.delta_x) +
+                                    "  t={:0.3f}".format(time.time()-self.start_t))
 
     @staticmethod
     def serial_default_port():
