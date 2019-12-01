@@ -33,14 +33,25 @@ def read_and_reset_odometry(thymio):
     if dtheta > 2**15:
         dtheta -= 2**16
 
-    thymio.reset_odom = True
+    thymio.set_var("d_x", 0)
+    thymio.set_var("d_y", 0)
+    thymio.set_var("d_theta", 0)
     return sensors[0], sensors[1], dx/1000, dy/1000, dtheta * np.pi/2**15
+
+# def read_and_reset_odometry(thymio):
+#     sensors = thymio["prox.ground.delta"]
+#     dx, dy, dtheta = thymio.delta_x, thymio.delta_y, thymio.delta_th
+#
+#     thymio.delta_x, thymio.delta_y, thymio.delta_th = 0., 0., 0.
+#     thymio.set_var("dist_left", 0)
+#     thymio.set_var("dist_right", 0)
+#     return sensors[0], sensors[1], dx, dy, dtheta
 
 map_file = 'data\\mapA3.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio.serial(port="COM20", refreshing_rate=0.1)
+thymio = Thymio.serial(port="COM14", refreshing_rate=0.5)
 
 if True:  # TODO calibration of Thymio still to be done
     # ... generate configuration on the fly
@@ -90,11 +101,11 @@ while not ok or len(yy) == 0 or len(zz) == 0:
         ok = True
 
 # time.sleep(1)
-T = 0.5
+T = 1.5
 start_time = 0
 i = 1
-sum_state = np.array([0.,0.,0.])
-while True:
+sum_state = np.array([x, y, theta])
+while i<13:
 
     if time.time() - start_time > T:
         print("----------------------", i)
@@ -118,7 +129,8 @@ while True:
         plot_time = time.time()
 
         if True:  # plot or not
-            loc.plot_state(base_filename=save_dir+str(i), plot_sens_pos=True, map_back=ground_map, num_particles=50)
+            loc.plot_state(base_filename=save_dir+str(i), plot_sens_pos=True,
+                           map_back=ground_map, num_particles=50, gt=sum_state)
         print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
         i += 1
@@ -129,3 +141,6 @@ while True:
     # except:
     #     thymio.set_var("motor.target.left", 0)
     #     thymio.set_var("motor.target.right", 0)
+#     lost = np.sum(np.asarray(thymio.debug_odom), 0);
+# print("lost:", lost)
+pass

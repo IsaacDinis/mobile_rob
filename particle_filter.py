@@ -35,7 +35,7 @@ class MonteCarlo:
             particles = np.random.uniform(0, 1, size=[particles_count, 3])
             particles = particles * [ground_map_left.shape[0], ground_map_left.shape[1], np.pi * 2]
         else:
-            particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/10]), size=(particles_count, 3))
+            particles = np.random.normal(state_init, np.asarray([1, 1, np.pi/5]), size=(particles_count, 3))
         self.particles = particles
         self.weights = np.zeros(particles_count)
         self.estimated_particle = np.zeros_like(particles[0, :], dtype=float)
@@ -249,7 +249,7 @@ class MonteCarlo:
         # self.estimated_particle = mean
         # return mean[0], mean[1], mean[2], 42
 
-    def plot_state(self, base_filename=None, gt_x=-1, gt_y=-1, gt_theta=-1,
+    def plot_state(self, base_filename=None, gt=np.array([-1, -1, -1]),
                 plot_sens_pos=True, map_back=None, num_particles=-1):
         """ Write particles to an image """
         fig = Figure((3, 3), tight_layout=True)
@@ -268,17 +268,17 @@ class MonteCarlo:
                 x, y, theta = self.particles[i, :]
                 ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
 
-        if gt_x != -1 and gt_y != -1:
-            ax.arrow(gt_x, gt_y, np.cos(gt_theta) * 2, np.sin(gt_theta) * 2, head_width=1, head_length=1.2, fc='green',
+        if gt[0] != -1 and gt[1] != -1:
+            ax.arrow(gt[0], gt[1], np.cos(gt[2]) * 2, np.sin(gt[2]) * 2, head_width=1, head_length=1.2, fc='green',
                      ec='green')
 
         ax.arrow(x, y, np.cos(theta) * 2, np.sin(theta) * 2, head_width=1, head_length=1.2, fc='blue', ec='blue')
 
         if plot_sens_pos:
-            if gt_x != -1 and gt_y != -1:
-                rot = ut.rot_mat2(gt_theta)
-                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([gt_x, gt_y])
-                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray([gt_x, gt_y])
+            if gt[0] != -1 and gt[1] != -1:
+                rot = ut.rot_mat2(gt[2])
+                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray(gt[0:2])
+                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray(gt[0:2])
             else:
                 rot = ut.rot_mat2(theta)
                 left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([x, y])

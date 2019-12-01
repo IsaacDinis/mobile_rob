@@ -3,6 +3,7 @@ from numba import jit
 
 
 # Utils ------------------------------------
+
 @jit(nopython=True)
 def norm(x, u, s):
     factor = 1. / (s * np.sqrt(2.*np.pi))

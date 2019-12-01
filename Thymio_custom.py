@@ -4,6 +4,8 @@
 # Go in RemoteNode's __init__ to add custom keys
 
 import threading
+import numpy as np
+
 
 class Message:
     """Aseba message data.
@@ -274,8 +276,8 @@ class RemoteNode:
         # hardcoded for our needs
         # corespond to event.args[0-->3]
         self.var_total_size = 0
-        self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4}
-        self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1}
+        self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4, "dist_left": 2, "dist_right": 3}
+        self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1, "dist_left": 1, "dist_right": 1}
         self.var_data = []
 
     def add_var(self, name, size):
@@ -323,6 +325,9 @@ class Thymio:
     """
 
     def __init__(self, io, node_id=1, refreshing_rate=None):
+        self.debug_odom = []
+        self.delta_x, self.delta_y, self.delta_th = 0., 0., 0.
+
         self.terminating = False
         self.io = io
         self.node_id = node_id
@@ -344,11 +349,23 @@ class Thymio:
                 self.refreshing_trigger.wait(self.refreshing_timeout)
                 self.refreshing_trigger.clear()
                 self.get_variables()
-                if self.reset_odom:
-                    self.set_var("d_x", 0)
-                    self.set_var("d_y", 0)
-                    self.set_var("d_theta", 0)
-                    self.reset_odom = False
+
+                self.increment_odometry()
+                # if self.reset_odom:
+                #     # ## debug
+                #     # table = self["event.args"]
+                #     # dx, dy, dtheta = table[0:3]
+                #     # if dx > 2 ** 15:
+                #     #     dx -= 2 ** 16
+                #     # if dy > 2 ** 15:
+                #     #     dy -= 2 ** 16
+                #     # if dtheta > 2 ** 15:
+                #     #     dtheta -= 2 ** 16
+                #     # self.debug_odom.append([dx, dy, dtheta])
+                #     # ## end debug
+                #
+                #     # self.set_var("d_theta", 0)
+                #     self.reset_odom = False
 
         self.refresh_thread = threading.Thread(target=do_refresh)
         self.refresh_thread.start()
@@ -369,6 +386,36 @@ class Thymio:
 
     def __exit__(self, type, value, traceback):
         self.close()
+
+    def increment_odometry(self):
+        try:
+            table = self["event.args"]
+        except KeyError:
+            table = [0]*3
+        try:
+            dl, dr = table[0:2]
+        except ValueError:
+            dl, dr = 0., 0.
+
+        if dl > 2 ** 15:
+            dl -= 2 ** 16
+        if dr > 2 ** 15:
+            dr -= 2 ** 16
+        cm_thunit_l = 7.218e-4  # cm/thymio units
+        cm_thunit_r = 7.184e-4  # 1.19 empirical correction
+        base_width = 9.5  # cm
+        dl *= cm_thunit_l
+        dr *= cm_thunit_r
+        dth = np.arctan2(dr - dl, base_width)
+        d = (dl + dr) / 2.
+
+        tmp = np.cos((self.delta_th + dth) / 2.)
+        dx = d * tmp
+        tmp = np.sin((self.delta_th + dth) / 2.)
+        dy = d * tmp
+        self.delta_x += dx
+        self.delta_y += dy
+        self.delta_th += dth
 
     @staticmethod
     def serial_default_port():
