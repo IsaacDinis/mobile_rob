@@ -2,14 +2,18 @@ import numpy as np
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
-mapA3 = np.kron(np.random.choice([0., 1.], [13, 9]), np.ones((3, 3)))
-plt.imshow(mapA3, cmap='gray')
+# mapA3 = np.kron(np.random.choice([0., 1.], [13, 9]), np.ones((3, 3)))
+raw = np.random.choice([0., 1.], [38, 27])
+mapA0 = np.kron(raw, np.ones((3, 3)))
+
+plt.imshow(mapA0, cmap='gray')
 plt.show()
 # %%
-mapA3_to_print = np.kron(mapA3, np.ones((118, 118)))
+# map_to_printA3 = np.kron(raw, np.ones((118, 118)))
+map_to_printA0 = np.kron(raw, np.ones((354, 354)))
 
 # %%
-# plt.imsave("mapA3.png", mapA3, cmap='gray')
-# plt.imsave("mapA3_to_print.png", mapA3_to_print, cmap='gray', dpi=300)
+plt.imsave("mapA0.png", mapA0, cmap='gray')
+plt.imsave("mapA0_to_print.jpg", map_to_printA0, cmap='gray', dpi=300)
 
 
