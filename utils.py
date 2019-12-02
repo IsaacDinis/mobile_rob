@@ -27,6 +27,13 @@ def normalize_angle_0_2pi(alpha):
     while alpha < 0:
         alpha += 2. * np.pi
     return alpha
+@jit(nopython=True)
+def normalize_angle_minus_pi_plus_pi(alpha):
+    while alpha >= np.pi:
+        alpha -= 2. * np.pi
+    while alpha <  -np.pi:
+        alpha += 2. * np.pi
+    return alpha
 
 @jit(nopython=True)
 def rot_mat2(angle):
@@ -81,3 +88,4 @@ def weird(N_uniform, mapshape):
     tmp = np.array([np.float(mapshape[0]), np.float(mapshape[1]), np.pi * 2.])
     new_particles = np.multiply(np.random.uniform(0, 1, (N_uniform, 3)), tmp)
     return new_particles
+
