@@ -13,7 +13,7 @@ def turn_angle(thymio, angle):
     thym_angle = round(angle*(2**15-1)/(2*np.pi))
     if thym_angle < 0:
         thym_angle += 2**16
-    thymio.set_var("angle_set", thym_angle)
+    thymio.set_var("angle_set", int(thym_angle) )
     thymio.set_var("movement_mode", MOV_ANGLE)
 
 
