@@ -39,15 +39,16 @@ def unitToSensor(value, table):
 #     thymio.set_var("d_theta", 0)
 #     return sensors[0], sensors[1], dx/1000, dy/1000, dtheta * np.pi/2**15
 
-def read_and_reset_odometry(thymio):
+def read_and_reset_odometry(thymio, reset=False):
     sensors = thymio["prox.ground.delta"]
     dx, dy, dtheta = thymio.delta_x, thymio.delta_y, thymio.delta_th
 
-    thymio.delta_x, thymio.delta_y, thymio.delta_th = 0., 0., 0.
-    thymio.past_dl, thymio.past_dr = 0., 0.
-    thymio.set_var("dist_left", 0)
-    thymio.set_var("dist_right", 0)
-    read_reset_times.append(["{:6.2f}".format(time.time()-thymio.start_t)])
+    if reset:
+        thymio.delta_x, thymio.delta_y, thymio.delta_th = 0., 0., 0.
+        thymio.past_dl, thymio.past_dr = 0., 0.
+        thymio.set_var("dist_left", 0)
+        thymio.set_var("dist_right", 0)
+        read_reset_times.append(["{:6.2f}".format(time.time()-thymio.start_t)])
 
     return sensors[0], sensors[1], dx, dy, dtheta
 
@@ -117,7 +118,7 @@ while i < 15:
 
     if time.time() - start_time > T:
         print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
-        sensor_left, sensor_right, dx, dy, dth = read_and_reset_odometry(thymio)
+        sensor_left, sensor_right, dx, dy, dth = read_and_reset_odometry(thymio, reset=True)
         sum_dx += dx
         # odometry alone
         norm_xy = np.sqrt(dx ** 2 + dy ** 2)

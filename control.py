@@ -29,7 +29,7 @@ def move_distance(thymio, dist):
 if __name__ == "__main__":
 # %%
     import time
-    thymio = Thymio.serial(port="COM14", refreshing_rate=0.1)
+    thymio = Thymio.serial(port="COM20", refreshing_rate=0.1)
 
 
     ok = False
@@ -40,11 +40,14 @@ if __name__ == "__main__":
             thymio["event.args"] = [0]*32
             zz = thymio["prox.ground.delta"]
         except KeyError:
-            time.sleep(1)
+            time.sleep(0.1)
         else:
             ok = True
         time.sleep(5)
-
+    print(thymio["event.args"][12])
     print("turning_now!")
     turn_angle(thymio, np.pi / 4)
+    while 1:
+        print(thymio["event.args"][12])
+        time.sleep(0.1)
 
