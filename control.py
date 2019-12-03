@@ -14,7 +14,7 @@ MAX_DIST = 42
 
 def turn_angle(thymio, angle):
     """ Turn the Thymio for an angle between +- 2pi"""
-    thym_angle = round(angle*(2**15-1)/(2*np.pi))
+    thym_angle = int(angle*(2**15-1)/(2*np.pi))
     if thym_angle < 0:
         thym_angle += 2**16
     thymio.set_var("angle_set", thym_angle)
@@ -23,7 +23,7 @@ def turn_angle(thymio, angle):
 
 def move_distance(thymio, dist):
     """ Move the Thymio for a distance between +-42cm"""
-    thym_dist = round(dist*(2**15-1)/MAX_DIST)
+    thym_dist = int(dist*(2**15-1)/MAX_DIST)
     if thym_dist < 0:
         thym_dist += 2**16
     thymio.set_var("dist_set", thym_dist)
@@ -32,10 +32,10 @@ def move_distance(thymio, dist):
 
 def turn_angle_move_distance(thymio, angle, dist, angle_first=True):
     """ Turn the Thymio for an angle between +- 2pi"""
-    thym_angle = round(angle*(2**15-1)/(2*np.pi))
+    thym_angle = int(angle*(2**15-1)/(2*np.pi))
     if thym_angle < 0:
         thym_angle += 2**16
-    thym_dist = round(dist*(2**15-1)/MAX_DIST)
+    thym_dist = int(dist*(2**15-1)/MAX_DIST)
     if thym_dist < 0:
         thym_dist += 2**16
     thymio.set_var("angle_set", thym_angle)
