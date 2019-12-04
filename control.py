@@ -51,7 +51,6 @@ if __name__ == "__main__":
     import time
     thymio = Thymio.serial(port="COM20", refreshing_rate=0.1)
 
-
     ok = False
     yy, zz = [], []
     while not ok or len(zz) == 0:

@@ -11,7 +11,7 @@ import serial
 from Thymio_custom import Thymio
 import numpy as np
 
-from control import turn_angle, move_distance
+from control import *
 from utils import normalize_angle_0_2pi, normalize_angle_minus_pi_plus_pi
 
 NO_ACTION = 0
@@ -64,7 +64,7 @@ def compute_interm_waypoint(prevW, nextW, robotPos):
      K = 0 --> direct return on the line at 90 degres"""
 
     while 1:
-        K=1
+        K=2
         intermW = prevW + (nextW - prevW) / np.linalg.norm(nextW - prevW) * (
                 np.dot(robotPos - prevW, nextW - prevW) / np.linalg.norm(nextW - prevW) + K)
 
@@ -83,6 +83,11 @@ def is_inside_tube(prevW, nextW, robotPos, tubeTol):
         return False
     else:
         return True
+
+def has_reached_goal(prevW, nextW, robotPos):
+    proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
+    return proj>np.linalg.norm(nextW-prevW)
+
 
 if __name__ == "__main__":
 # %%
@@ -104,9 +109,9 @@ if __name__ == "__main__":
 
     # thymioPos = [1,1]
     # goalPos = [1,0]
-    thymioTh= np.pi/2
-    robotPos=np.array([2,2])
-    goal = np.array([5,5])
+    thymioTh= -np.pi/2
+    robotPos=np.array([8,2])
+    goal = np.array([10,10])
     start= np.array([1,1])
 
     waypointList= [start,goal, np.array([10,10])]
@@ -118,35 +123,56 @@ if __name__ == "__main__":
 
     willTravelToLine=0
 
+    navType="NavGlobal" # global variable, to modify from refresh()
+    state="start"
+    while 1:
+        time.sleep(1) #fake particule filter Lag
+        if navType=="NavGlobal":
+            if has_reached_goal(start, goal, robotPos):
+                print("yolo we reached goal")
+                thymio.set_var("motor.right.target",0)
+                thymio.set_var("motor.left.target",0)
 
-
-navType="Global" # global variable, to modify from refresh()
-state="start"
-while 1:
-    time.sleep(2) #fake particule filter Lag
-    if state=="start":
-        if is_inside_tube(start, goal, robotPos, tubeTol=2):
-                epsTh = compute_eps(robotPos, goal, thymioTh)
-                if abs(epsTh)>np.deg2rad(5):
-                    state = "turnInTube"
+                break
+            if state=="start":
+                if is_inside_tube(start, goal, robotPos, tubeTol=2):
+                        epsTh = compute_eps(robotPos, goal, thymioTh)
+                        if abs(epsTh)>np.deg2rad(10):
+                            state = "turnInTube"
+                        else:
+                            state = "straightInTube"
                 else:
-                    state = "straightInTube"
-        else:
-            state = "turnOutTube"
-    if state=="straightInTube":
-        move_distance()
-        gostraight( )
+                    state = "turnOutTube"
+            print("NavType: " + navType + "state: " + state + " pos : " + str(robotPos) )
 
+            if state=="straightInTube":
+                # move_distance(thymio, np.linalg.norm(goal-start))
+                thymio.set_var("motor.right.target", 80)
+                thymio.set_var("motor.left.target", 80)
+                state= "start"
+                robotPos+=np.array([np.cos(thymioTh), np.sin(thymioTh)])*0.8 #fake odometry
 
+            elif state== "turnInTube":
+                epsTh = compute_eps(robotPos, goal, thymioTh)
+                turn_angle(thymio, epsTh)
+                state="wait"
+                thymioTh+=epsTh #fake odom
 
+            elif state == "wait":
+                if thymio["event.args"][12] == NO_ACTION:
+                    state = "start"
 
+            elif state == "turnOutTube":
+                intermWaypoint = compute_interm_waypoint(start, goal, robotPos)
+                epsTh = compute_eps(robotPos, intermWaypoint, thymioTh)
+                disToTravel = np.linalg.norm(robotPos - intermWaypoint)
+                turn_angle_move_distance(thymio, epsTh, disToTravel)
+                state = "wait"
+                thymioTh += epsTh  # fake odom
+                robotPos = intermWaypoint #fake odom
 
-
-
-
-
-    time.sleep(0.5)
-    #     move_distance(thymio, 10)
-
-
-
+            else:
+                print("error, state unknown")
+        else: # currently switched to local nav
+            state="start" # so we are in the correct state when we come back to globalNav
+            print("NavType: " + navType )
