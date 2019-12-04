@@ -2,7 +2,7 @@ from vision import *
 import cv2
 
 
-img = cv2.imread("map_test.PNG")
+img = cv2.imread("map_test/map_test.PNG")
 img = cv2.flip(img, 0)
 # cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
 # while True:
