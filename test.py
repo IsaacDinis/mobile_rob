@@ -1,6 +1,6 @@
 from vision import *
 import cv2
-print("lkhj")
+
 img = cv2.imread("map_test_semi_complic.png")
 img= cv2.flip(img, 0)
 
@@ -25,4 +25,3 @@ draw_obstacles(resized, obstacles)
 cv2.imshow("projected", resized)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-print("")

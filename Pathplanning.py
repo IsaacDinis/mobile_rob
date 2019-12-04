@@ -6,11 +6,6 @@ from vision import *
 import cv2
 
 
-
-#%% asdf
-
-
-
 class Obstacle:
     def __init__(self, vertexList):
         borderDistance = 1
@@ -113,9 +108,3 @@ unzippedPath=list(zip(*path))
 plt.plot(unzippedPath[0], unzippedPath[1], '--',color='black')
 
 plt.show()
-print("")
-
-
-#%%
-# plt.plot(np.array([0.5,1.2,1.9]), np.array([1,2,3]), 'o')
-# plt.show()
