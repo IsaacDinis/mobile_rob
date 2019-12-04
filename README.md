@@ -10,3 +10,7 @@ Convert jupyter notebook code into .py with
 ```
 jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb
 ```
+instal dependency for path planning:
+```
+pip install extremitypathfinder
+```
