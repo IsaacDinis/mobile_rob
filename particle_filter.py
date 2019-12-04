@@ -52,6 +52,7 @@ class MonteCarlo:
     def _apply_obs_and_resample(particles, particles_count, ground_map_left, ground_map_right,
                                 sigma_obs, N_uniform, mapshape, left_color, right_color):
         """ Apply observation and update probability weights, then resample"""
+        ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         particles_count = particles_count
         # particles = np.asarray(particles)
         weights = np.zeros(particles_count)
@@ -61,8 +62,8 @@ class MonteCarlo:
 
             # compute position of sensors in world coordinates
             rot = ut.rot_mat2(theta)
-            left_sensor_pos = rot.dot(np.array([7.2, 1.1])) + particles[i, 0:2]
-            right_sensor_pos = rot.dot(np.array([7.2, -1.1])) + particles[i, 0:2]
+            left_sensor_pos = rot.dot(np.array([7.2*ratioA0, 1.1*ratioA0])) + particles[i, 0:2]
+            right_sensor_pos = rot.dot(np.array([7.2*ratioA0, -1.1*ratioA0])) + particles[i, 0:2]
 
             if not ut.is_in_bound(mapshape, left_sensor_pos) or not ut.is_in_bound(mapshape, right_sensor_pos):
                 # kill particle if out of map
@@ -254,6 +255,7 @@ class MonteCarlo:
     def plot_state(self, base_filename=None, gt=np.array([-1, -1, -1]),
                 plot_sens_pos=True, map_back=None, num_particles=-1):
         """ Write particles to an image """
+        ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         fig = Figure((3, 3), tight_layout=True)
         canvas = FigureCanvas(fig)
         ax = fig.gca()
@@ -279,12 +281,12 @@ class MonteCarlo:
         if plot_sens_pos:
             if gt[0] != -1 and gt[1] != -1:
                 rot = ut.rot_mat2(gt[2])
-                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray(gt[0:2])
-                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray(gt[0:2])
+                left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray(gt[0:2])
+                right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray(gt[0:2])
             else:
                 rot = ut.rot_mat2(theta)
-                left_sensor_pos = rot.dot([7.2, 1.1]) + np.asarray([x, y])
-                right_sensor_pos = rot.dot([7.2, -1.1]) + np.asarray([x, y])
+                left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray([x, y])
+                right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray([x, y])
 
             ax.plot(left_sensor_pos[0], left_sensor_pos[1], 'ro', markersize=1)
             ax.plot(right_sensor_pos[0], right_sensor_pos[1], 'go', markersize=1)

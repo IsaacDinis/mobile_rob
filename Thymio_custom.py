@@ -407,8 +407,8 @@ class Thymio:
             dl -= 2 ** 16
         if dr > 2 ** 15:
             dr -= 2 ** 16
-        cm_thunit_l = 7.218e-4  # cm/thymio units
-        cm_thunit_r = 7.184e-4  # 1.19 empirical correction
+        cm_thunit_l = 7.698e-4  # cm/thymio units  for real world 7.218e-4
+        cm_thunit_r = 7.766e-4   # for real world 7.184e-4  #
         base_width = 9.5  # cm
         dl *= cm_thunit_l
         dr *= cm_thunit_r

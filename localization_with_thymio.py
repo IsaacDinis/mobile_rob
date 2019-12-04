@@ -9,6 +9,8 @@ import matplotlib.image as mpimg
 from particle_filter import *
 import utils as ut
 from Thymio_custom import Thymio
+import control
+ANGLE_ONLY
 
 # support functions
 # def sigm(x, s): return 1. / (1. + np.exp(-x * s))
@@ -52,7 +54,7 @@ def read_and_reset_odometry(thymio, reset=False):
 
     return sensors[0], sensors[1], dx, dy, dtheta
 
-map_file = 'data\\mapA3.png'
+map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
@@ -114,7 +116,7 @@ start_time = 0
 i = 1
 d_reck = np.array([x, y, theta])
 sum_dx = 0
-while i < 15:
+while i < 30:
 
     if time.time() - start_time > T:
         print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
@@ -136,11 +138,9 @@ while i < 15:
         print("Odometry: {:0.2f} {:0.2f} {:0.2f}".format(dx, dy, dth))
         print("Dead reckoning: {:0.2f} {:0.2f} {:0.2f}".format(d_reck[0], d_reck[1], d_reck[2])+",  sum dx:", sum_dx)
         # print("Estimated state: ", ["{:0.2f}".format(x) for x in loc.estimated_particle])
-        # print("Confidence:", confidence)
+        print("Confidence:", confidence)
 
-        # print("Duration algo: {} ms".format()
         plot_time = time.time()
-
         if True:  # plot or not
             loc.plot_state(base_filename=save_dir+str(i), plot_sens_pos=True,
                            map_back=ground_map, num_particles=50, gt=d_reck)
