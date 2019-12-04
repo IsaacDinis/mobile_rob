@@ -58,13 +58,12 @@ def compute_eps( thymioPos, goalPos, thymioTh):
     epsTh=normalize_angle_minus_pi_plus_pi(epsTh)
     return epsTh
 
-def compute_interm_waypoint(prevW, nextW, robotPos):
+def compute_interm_waypoint(prevW, nextW, robotPos, K):
     """k= added distance from projection, here K = distance from robot to preojection, so the robot will come back to line with 45degres, \n
      smaller K = quicker sharper return on the line. \n
      K = 0 --> direct return on the line at 90 degres"""
 
     while 1:
-        K=2
         intermW = prevW + (nextW - prevW) / np.linalg.norm(nextW - prevW) * (
                 np.dot(robotPos - prevW, nextW - prevW) / np.linalg.norm(nextW - prevW) + K)
 
@@ -84,7 +83,7 @@ def is_inside_tube(prevW, nextW, robotPos, tubeTol):
     else:
         return True
 
-def has_reached_goal(prevW, nextW, robotPos):
+def has_reached_nextW(prevW, nextW, robotPos):
     proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
     return proj>np.linalg.norm(nextW-prevW)
 
@@ -109,67 +108,80 @@ if __name__ == "__main__":
 
     # thymioPos = [1,1]
     # goalPos = [1,0]
-    thymioTh= -np.pi/2
-    robotPos=np.array([8,2])
-    goal = np.array([10,10])
-    start= np.array([1,1])
 
-    waypointList= [start,goal, np.array([10,10])]
-    currentGoal= 1
-    intermWaypoint= None
+    # W = np.array([10,10])
+    # g
+    # start= np.array([1,1])
+    tubeTol= 2
+    outOfTubeAvancementTarget= 2
+    thymioTh= np.pi
+    tymioPos=np.array([2, 6])
+    path= [np.array([1,1]), np.array([10,10]), np.array([15,5])]
+    currentTargetID = 1
+
 
     # epsTh = compute_eps(robotPos, goal, thymioTh )
     # turn_angle(thymio, epsTh )
 
     willTravelToLine=0
 
-    navType="NavGlobal" # global variable, to modify from refresh()
+    navType="NavGlobal" # refresh() is going to modify this var
     state="start"
     while 1:
-        time.sleep(1) #fake particule filter Lag
+        time.sleep(1) #fake lag for future particule filter
+
         if navType=="NavGlobal":
-            if has_reached_goal(start, goal, robotPos):
-                print("yolo we reached goal")
+            nextW=path[currentTargetID]
+            lastW=path[currentTargetID -1]
+            if has_reached_nextW(lastW, nextW, tymioPos):
+                print("We reached a waypoint")
                 thymio.set_var("motor.right.target",0)
                 thymio.set_var("motor.left.target",0)
+                if currentTargetID==len(path)-1 :
+                    print("the waypoint we reached was the goal ! ")
+                    break
+                else:
+                    currentTargetID+=1
+                    nextW = path[currentTargetID]
+                    lastW = path[currentTargetID - 1]
 
-                break
+
             if state=="start":
-                if is_inside_tube(start, goal, robotPos, tubeTol=2):
-                        epsTh = compute_eps(robotPos, goal, thymioTh)
+                if is_inside_tube(lastW, nextW, tymioPos, tubeTol=tubeTol):
+                        epsTh = compute_eps(tymioPos, nextW, thymioTh)
                         if abs(epsTh)>np.deg2rad(10):
                             state = "turnInTube"
                         else:
                             state = "straightInTube"
                 else:
                     state = "turnOutTube"
-            print("NavType: " + navType + "state: " + state + " pos : " + str(robotPos) )
+            print("NavType: " + navType + " // state: " + state + " // pos : " + str(tymioPos))
 
             if state=="straightInTube":
-                # move_distance(thymio, np.linalg.norm(goal-start))
+                # move_distance(thymio, np.linalg.norm(nextW-lastW))
                 thymio.set_var("motor.right.target", 80)
                 thymio.set_var("motor.left.target", 80)
                 state= "start"
-                robotPos+=np.array([np.cos(thymioTh), np.sin(thymioTh)])*0.8 #fake odometry
+                tymioPos+= np.array([np.cos(thymioTh), np.sin(thymioTh)]) * 0.8 #fake odometry
 
             elif state== "turnInTube":
-                epsTh = compute_eps(robotPos, goal, thymioTh)
+                epsTh = compute_eps(tymioPos, nextW, thymioTh)
                 turn_angle(thymio, epsTh)
                 state="wait"
-                thymioTh+=epsTh #fake odom
+                thymioTh+=epsTh #fake odometry
 
             elif state == "wait":
                 if thymio["event.args"][12] == NO_ACTION:
                     state = "start"
 
             elif state == "turnOutTube":
-                intermWaypoint = compute_interm_waypoint(start, goal, robotPos)
-                epsTh = compute_eps(robotPos, intermWaypoint, thymioTh)
-                disToTravel = np.linalg.norm(robotPos - intermWaypoint)
+                intermWaypoint = compute_interm_waypoint(lastW, nextW, tymioPos, outOfTubeAvancementTarget)
+                epsTh = compute_eps(tymioPos, intermWaypoint, thymioTh)
+                disToTravel = np.linalg.norm(tymioPos - intermWaypoint)
                 turn_angle_move_distance(thymio, epsTh, disToTravel)
                 state = "wait"
-                thymioTh += epsTh  # fake odom
-                robotPos = intermWaypoint #fake odom
+                thymioTh += epsTh  #fake odometry
+                tymioPos = intermWaypoint #fake odometry
 
             else:
                 print("error, state unknown")
