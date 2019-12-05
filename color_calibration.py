@@ -14,7 +14,7 @@ colors = ["blue", "red", "pink", "green"]
 i = 0
 
 if use_image:
-    frame = cv2.imread("map_test.PNG")
+    frame = cv2.imread("map_test/map_test.PNG")
 else:
     cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
 

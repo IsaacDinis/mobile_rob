@@ -107,7 +107,7 @@ def detect_obstacles(frame):
 
     for cnt in contours:
         cnt = cv2.approxPolyDP(cnt, 0.05*cv2.arcLength(cnt, True), True)
-        cnt = np.flipud(cnt)
+        # cnt = np.flipud(cnt)
         apr_contours.append(cnt)
     return apr_contours
 

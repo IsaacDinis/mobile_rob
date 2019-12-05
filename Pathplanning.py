@@ -13,7 +13,7 @@ class Obstacle:
         self.vertexExpanded=[]
         #centerOfMass
         tot=[0,0]
-        for point in  self.vertex:
+        for point in self.vertex:
             tot[0]+= point[0]
             tot[1]+= point[1]
         N= len(vertexList)
@@ -41,30 +41,33 @@ class Obstacle:
 # goal = (27,25-4)
 
 
-img = cv2.imread("map_test_more_complicated.png")
-img= cv2.flip(img, 0)
+img = cv2.imread("map_test/map_test_more_complicated.png")
+img = cv2.flip(img, 0)
 
-# cv2.imshow("Display window", img)
 warped = map_projection(img)
-scale_percent = 150  # percent of original size
 resized = resize_img(warped, 1.5)
+pix_to_unit = 27/(resized.shape[0]*3)
 thymioPos = detect_thymio(resized)
 if thymioPos:
-    start=[thymioPos.pos.x, thymioPos.pos.y]
+    start = [thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit]
 
 goal = detect_goal(resized)
+goal = (goal[0]*pix_to_unit, goal[1]*pix_to_unit)
 obstaclesListIsaac = detect_obstacles(resized)
 
-obsList=[]
+obsList = []
 for obstacleIsaac in obstaclesListIsaac:
-    vertexIsaac=np.ndarray.tolist(obstacleIsaac.squeeze())
-    vertexIsaac.reverse()
-    obstacleMax= Obstacle(vertexIsaac)
+    obstacleIsaac = obstacleIsaac.astype('float64')
+    obstacleIsaac *= pix_to_unit
+    a = pix_to_unit * obstacleIsaac
+    vertexIsaac = np.ndarray.tolist(obstacleIsaac.squeeze())
+    # vertexIsaac.reverse()
+    obstacleMax = Obstacle(vertexIsaac)
     obsList.append(obstacleMax)
 
 
 for obs in obsList:
-    unzippedList=list(zip(*obs.vertex))
+    unzippedList = list(zip(*obs.vertex))
     unzippedList = [list(elem) for elem in unzippedList]
     unzippedList[0].append(unzippedList[0][0])
     unzippedList[1].append(unzippedList[1][0])
@@ -78,7 +81,7 @@ for obs in obsList:
 
 
 plt.plot(start[0], start[1], 'o', color='green')
-plt.plot(goal[0], goal[1], 'o',color='red')
+plt.plot(goal[0], goal[1], 'o', color='red')
 
 
 
@@ -104,7 +107,7 @@ map.prepare()
 
 path, length = map.find_shortest_path(start, goal)
 print(path, length)
-unzippedPath=list(zip(*path))
-plt.plot(unzippedPath[0], unzippedPath[1], '--',color='black')
+unzippedPath = list(zip(*path))
+plt.plot(unzippedPath[0], unzippedPath[1], '--', color='black')
 
 plt.show()
