@@ -88,7 +88,7 @@ def has_reached_nextW(prevW, nextW, robotPos):
     return proj>np.linalg.norm(nextW-prevW)
 
 
-def global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget):
+def global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget, angleInTubeTol):
     """ fucntion to navigate in and out a tube on a given set of waypoint (always give the total path inclusing starting waypoint
         currentTargetID should be set to 1 in the beginning"""
 
@@ -111,7 +111,7 @@ def global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol,
         if state == "start":
             if is_inside_tube(lastW, nextW, tymioPos, tubeTol=tubeTol):
                 epsTh = compute_eps(tymioPos, nextW, thymioTh)
-                if abs(epsTh) > np.deg2rad(10):
+                if abs(epsTh) > np.deg2rad(angleInTubeTol):
                     state = "turnInTube"
                 else:
                     state = "straightInTube"
@@ -176,13 +176,15 @@ if __name__ == "__main__":
 
     tubeTol= 2
     outOfTubeAvancementTarget= 2
-    thymioTh= np.pi
-    tymioPos=np.array([2, 6])
+    angleInTubeTol= 10
     path= [np.array([1,1]), np.array([10,10]), np.array([15,5])]
     currentTargetID = 1
     navType="NavGlobal" # refresh() is going to modify this var
     state="start"
 
+    thymioTh= np.pi
+    tymioPos=np.array([2, 6])
+
     while 1:
         time.sleep(1) #fake lag for future particule filter
-        [state, currentTargetID] = global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget )
+        [state, currentTargetID] = global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget, angleInTubeTol )
