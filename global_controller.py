@@ -180,9 +180,9 @@ if __name__ == "__main__":
         tubeTol= 2
         outOfTubeAvancementTarget= 2
         angleInTubeTol= 10
-        path= [np.array([1,1]), np.array([10,10]), np.array([15,5])]
         currentTargetID = 1
         state="start"
+        path = [np.array([1, 1]), np.array([10, 10]), np.array([15, 5])] # Maybe you want to change the waypoint of path here
     globalControllerParam=setGlobalControllerParam()
 
     navType = "NavGlobal"  # TODO isaac : refresh() is going to modify this var
