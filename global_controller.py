@@ -88,78 +88,80 @@ def has_reached_nextW(prevW, nextW, robotPos):
     return proj>np.linalg.norm(nextW-prevW)
 
 
-def global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget, angleInTubeTol):
-    """ fucntion to navigate in and out a tube on a given set of waypoint (always give the total path inclusing starting waypoint
-        currentTargetID should be set to 1 in the beginning"""
+def global_controller(thymioTh, thymioPos, param):
+    """ fct to navigate in and out a tube on a given set of waypoint (always give the total param.path including starting waypoint
+        param.currentTargetID shall be set to 1 in the beginning"""
 
     global navType
+
     if navType == "NavGlobal":
-        nextW = path[currentTargetID]
-        lastW = path[currentTargetID - 1]
-        if has_reached_nextW(lastW, nextW, tymioPos):
+        nextW = param.path[param.currentTargetID]
+        lastW = param.path[param.currentTargetID - 1]
+        if has_reached_nextW(lastW, nextW, thymioPos):
             print("We reached a waypoint")
             thymio.set_var("motor.right.target", 0)
             thymio.set_var("motor.left.target", 0)
-            if currentTargetID == len(path) - 1:
+            if param.currentTargetID == len(param.path) - 1:
                 print("the waypoint we reached was the goal ! ")
-                state= "reachedGoal"
+                param.state= "reachedGoal"
             else:
-                currentTargetID += 1
-                nextW = path[currentTargetID]
-                lastW = path[currentTargetID - 1]
+                param.currentTargetID += 1
+                nextW = param.path[param.currentTargetID]
+                lastW = param.path[param.currentTargetID - 1]
 
-        if state == "start":
-            if is_inside_tube(lastW, nextW, tymioPos, tubeTol=tubeTol):
-                epsTh = compute_eps(tymioPos, nextW, thymioTh)
-                if abs(epsTh) > np.deg2rad(angleInTubeTol):
-                    state = "turnInTube"
+        if param.state == "start":
+            if is_inside_tube(lastW, nextW, thymioPos, param.tubeTol):
+                epsTh = compute_eps(thymioPos, nextW, thymioTh)
+                if abs(epsTh) > np.deg2rad(param.angleInTubeTol):
+                    param.state = "turnInTube"
                 else:
-                    state = "straightInTube"
+                    param.state = "straightInTube"
             else:
-                state = "turnOutTube"
-        print("NavType: " + navType + " // state: " + state + " // pos : " + str(tymioPos))
+                param.state = "turnOutTube"
+        print("NavType: " + navType + " // param.state: " + param.state + " // pos : " + str(thymioPos))
 
-        if state == "straightInTube":
+        if param.state == "straightInTube":
             # move_distance(thymio, np.linalg.norm(nextW-lastW))
             thymio.set_var("motor.right.target", 80)
             thymio.set_var("motor.left.target", 80)
-            state = "start"
-            # tymioPos += np.array([np.cos(thymioTh), np.sin(thymioTh)]) * 0.8  # fake odometry
+            param.state = "start"
+            # thymioPos += np.array([np.cos(thymioTh), np.sin(thymioTh)]) * 0.8  # fake odometry
 
-        elif state == "turnInTube":
-            epsTh = compute_eps(tymioPos, nextW, thymioTh)
+        elif param.state == "turnInTube":
+            epsTh = compute_eps(thymioPos, nextW, thymioTh)
             turn_angle(thymio, epsTh)
-            state = "wait"
+            param.state = "wait"
             # thymioTh += epsTh  # fake odometry
 
-        elif state == "wait":
+        elif param.state == "wait":
             if thymio["event.args"][12] == NO_ACTION:
-                state = "start"
+                param.state = "start"
 
-        elif state == "turnOutTube":
-            intermWaypoint = compute_interm_waypoint(lastW, nextW, tymioPos, outOfTubeAvancementTarget)
-            epsTh = compute_eps(tymioPos, intermWaypoint, thymioTh)
-            disToTravel = np.linalg.norm(tymioPos - intermWaypoint)
+        elif param.state == "turnOutTube":
+            intermWaypoint = compute_interm_waypoint(lastW, nextW, thymioPos, param.outOfTubeAvancementTarget)
+            epsTh = compute_eps(thymioPos, intermWaypoint, thymioTh)
+            disToTravel = np.linalg.norm(thymioPos - intermWaypoint)
             turn_angle_move_distance(thymio, epsTh, disToTravel)
-            state = "wait"
+            param.state = "wait"
             # thymioTh += epsTh  # fake odometry
-            # tymioPos = intermWaypoint  # fake odometry
+            # thymioPos = intermWaypoint  # fake odometry
 
-        elif state == "reachedGoal":
+        elif param.state == "reachedGoal":
             print("the waypoint we reached was the goal ! ")
 
         else:
-            print("error, state unknown")
+            print("error, param.state unknown")
     else:  # currently switched to local nav
-        state = "start"  # so we are in the correct state when we come back to globalNav
+        param.state = "start"  # so we are in the correct param.state when we come back to globalNav
         print("NavType: " + navType)
 
-    # return state, currentTargetID, thymioTh, tymioPos # fake odom, we can remove the 2 last one later
-    return state, currentTargetID
+    # fake odom
+    # return param.state, param.currentTargetID, thymioTh, thymioPos
+    return param
 
 if __name__ == "__main__":
 # %%
-    thymio = Thymio.serial(port="COM12", refreshing_rate=0.1)
+    thymio = Thymio.serial(port="COM18", refreshing_rate=0.1)
 
     ok = False
     yy, zz = [], []
@@ -174,17 +176,20 @@ if __name__ == "__main__":
             ok = True
         time.sleep(0.5)
 
-    tubeTol= 2
-    outOfTubeAvancementTarget= 2
-    angleInTubeTol= 10
-    path= [np.array([1,1]), np.array([10,10]), np.array([15,5])]
-    currentTargetID = 1
-    navType="NavGlobal" # refresh() is going to modify this var
-    state="start"
+    class setGlobalControllerParam:
+        tubeTol= 2
+        outOfTubeAvancementTarget= 2
+        angleInTubeTol= 10
+        path= [np.array([1,1]), np.array([10,10]), np.array([15,5])]
+        currentTargetID = 1
+        state="start"
+    globalControllerParam=setGlobalControllerParam()
 
-    thymioTh= np.pi
-    tymioPos=np.array([2, 6])
+    navType = "NavGlobal"  # TODO isaac : refresh() is going to modify this var
+
 
     while 1:
         time.sleep(1) #fake lag for future particule filter
-        [state, currentTargetID] = global_controller(state, thymioTh, tymioPos, path, currentTargetID, tubeTol, outOfTubeAvancementTarget, angleInTubeTol )
+        thymioTh = np.pi  # TODO Loic : mettre la valeur d'angle du thymio ici
+        thymioPos = np.array([2, 6])  # TODO Loic : mettre la position du thymio ici
+        globalControllerParam = global_controller(thymioTh, thymioPos, globalControllerParam)
