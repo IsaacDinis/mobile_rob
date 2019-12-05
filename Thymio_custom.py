@@ -8,6 +8,30 @@ import numpy as np
 import time
 
 
+# our function
+def wait_init(thymio):
+    ok = False
+    yy, zz = [], []
+    while not ok or len(yy) < 32 or len(zz) < 2:
+        time.sleep(0.5)
+        try:
+            yy = thymio["event.args"]
+            zz = thymio["prox.ground.delta"]
+        except KeyError:
+            time.sleep(1)
+        else:
+            ok = True
+
+
+def reset_thymio(thymio):
+    thymio.delta_x, thymio.delta_y, thymio.delta_th = 0., 0., 0.
+    thymio.past_dl, thymio.past_dr = 0., 0.
+    thymio.set_var("mult_left", 0)
+    thymio.set_var("mult_right", 0)
+    thymio.set_var("dist_left", 0)
+    thymio.set_var("dist_right", 0)
+
+
 class Message:
     """Aseba message data.
     """
@@ -277,9 +301,9 @@ class RemoteNode:
         # hardcoded for our needs
         # corespond to event.args[0-->3]
         self.var_total_size = 0
-        self.var_offset = {"d_x": 2, "d_y": 3, "d_theta": 4, "dist_left": 2, "dist_right": 3,
+        self.var_offset = {"dist_left": 2, "dist_right": 3, "mult_left": 4, "mult_right": 5,
                            "angle_set": 12, "dist_set": 13, "movement_mode": 14}
-        self.var_size = {"d_x": 1, "d_y": 1, "d_theta": 1, "dist_left": 1, "dist_right": 1,
+        self.var_size = {"dist_left": 1, "dist_right": 1, "mult_left": 1, "mult_right": 1,
                          "angle_set": 1, "dist_set": 1, "movement_mode": 1}
         self.var_data = []
 
@@ -394,22 +418,26 @@ class Thymio:
         self.close()
 
     def increment_odometry(self):
+        ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         try:
             table = self["event.args"]
         except KeyError:
-            table = [0]*3
+            table = [0]*4
         try:
-            dl, dr = table[0:2]
+            dl, dr, mult_l, mult_r = table[0:4]
         except ValueError:
-            dl, dr = 0., 0.
+            dl, dr, mult_l, mult_r = 0., 0., 0, 0
 
         if dl > 2 ** 15:
             dl -= 2 ** 16
         if dr > 2 ** 15:
             dr -= 2 ** 16
-        cm_thunit_l = 7.698e-4  # cm/thymio units  for real world 7.218e-4
+        dl += 32500 * mult_l  # value to avoid overflow in aseba code
+        dr += 32500 * mult_r
+
+        cm_thunit_l = 7.698e-4  # cm/thymio units calibrated on our map, for real world 7.218e-4
         cm_thunit_r = 7.766e-4   # for real world 7.184e-4  #
-        base_width = 9.5  # cm
+        base_width = 9.5 * ratioA0  # cm
         dl *= cm_thunit_l
         dr *= cm_thunit_r
         dl -= self.past_dl

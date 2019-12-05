@@ -10,6 +10,8 @@
 <constant value="11300" name="TIME_2PI_LEFT"/>
 <constant value="0" name="STOP"/>
 <constant value="13960" name="TIME_42_CM"/>
+<constant value="32500" name="RESET_VALUE"/>
+<constant value="80" name="SPEED"/>
 
 
 <!--show keywords state-->
@@ -23,19 +25,37 @@ var tmp
 # odometry
 timer.period = [0,0]
 
-event.args[0] = 0
-event.args[1] = 0
-event.args[10] = 0 # rotation angle
+event.args[0] = 0  # wheel left
+event.args[1] = 0  # wheel right
+event.args[2] = 0  # wheel left multiplicator
+event.args[3] = 0  # wheel right multiplicator
+
+event.args[10] = 0  # rotation angle
 event.args[11] = 0  # distance
 event.args[12] = 0  # 1 = Accept angle command, 2 = accept line command, 3 = Angle and then line,
 # 4 = line and then angle, 0 = don't accept precise command
-# disable ground leds
+# disable leds
 call leds.prox.v(0,0)
 call leds.temperature(0,0)
 
 
 onevent motor # odometry
-	if  i%2 == 0 then
+	if  i%2 == 0 then  # avoid overflow with multiplicators and increment
+		if event.args[0] > RESET_VALUE then
+			event.args[0] = event.args[0] - RESET_VALUE
+			event.args[2] = event.args[2] + 1
+		elseif event.args[0] &lt; -RESET_VALUE then
+			event.args[0] = event.args[0] + RESET_VALUE
+			event.args[2] = event.args[2] - 1
+		end
+		if event.args[1] > RESET_VALUE then
+			event.args[1] = event.args[1] - RESET_VALUE
+			event.args[3] = event.args[3] + 1
+		elseif event.args[1] &lt; -RESET_VALUE then
+			event.args[1] = event.args[1] + RESET_VALUE
+			event.args[3] = event.args[3] - 1
+		end
+		
 		event.args[0] = event.args[0] + motor.left.speed
 		event.args[1] = event.args[1] + motor.right.speed
 	end
@@ -49,26 +69,26 @@ onevent motor # odometry
 	
 sub turn_angle
 	if event.args[10] > 0 then
-		motor.left.target=-80
-		motor.right.target=80
+		motor.left.target = -SPEED
+		motor.right.target = SPEED
 		call math.muldiv(tmp, event.args[10], TIME_2PI_LEFT, 32767)
 		timer.period[0] = tmp
 	elseif event.args[10] &lt; 0 then
-		motor.left.target=80
-		motor.right.target=-80
+		motor.left.target = SPEED
+		motor.right.target = -SPEED
 		call math.muldiv(tmp, -event.args[10], TIME_2PI_RIGHT, 32767)
 		timer.period[0] = tmp
 	end
 	
 sub go_straight_distance
 	if event.args[11] > 0 then
-		motor.left.target=80
-		motor.right.target=80
+		motor.left.target = SPEED
+		motor.right.target = SPEED
 		call math.muldiv(tmp, event.args[11], TIME_42_CM, 32767)
 		timer.period[0] = tmp
 	elseif event.args[11] &lt; 0 then
-		motor.left.target=-80
-		motor.right.target=-80
+		motor.left.target = -SPEED
+		motor.right.target = -SPEED
 		call math.muldiv(tmp, -event.args[11], TIME_42_CM, 32767)
 		timer.period[0] = tmp
 	end
@@ -81,8 +101,8 @@ onevent timer0
 		event.args[12] = 1
 		callsub turn_angle
 	else
-		motor.left.target=0
-		motor.right.target=0
+		motor.left.target = 0
+		motor.right.target = 0
 		timer.period[0] = 0
 		event.args[12] = 0
 	end
@@ -93,21 +113,21 @@ onevent timer0
 #	timer.period[1] = 0
 	
 onevent button.forward
-	motor.left.target=80
-	motor.right.target=80
+	motor.left.target = SPEED
+	motor.right.target = SPEED
 onevent button.right
-	motor.left.target=80
-	motor.right.target=-80
+	motor.left.target = SPEED
+	motor.right.target = -SPEED
 	#call math.muldiv(tmp, event.args[10], TIME_2PI_RIGHT, 32767)
 	#timer.period[0] = tmp
 onevent button.left
-	motor.left.target=-80
-	motor.right.target=80
+	motor.left.target = -SPEED
+	motor.right.target = SPEED
 	#call math.muldiv(tmp, event.args[10], TIME_2PI_LEFT, 32767)
 	#timer.period[0] = tmp
 onevent button.backward
-	motor.left.target=0
-	motor.right.target=0
+	motor.left.target = 0
+	motor.right.target = 0
 	timer.period[0] = 0</node>
 
 

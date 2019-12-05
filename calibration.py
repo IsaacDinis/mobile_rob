@@ -3,22 +3,12 @@ import json
 import time
 
 import utils as ut
-from Thymio_custom import Thymio
+import Thymio_custom
 
 # connect to the Thymio
-thymio = Thymio.serial(port="COM14", refreshing_rate=0.5)
+thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.5)
 
-ok = False
-yy, zz = [], []
-while not ok or len(yy) == 0 or len(zz) == 0:  # wait for thymio to be ready
-    time.sleep(0.5)
-    try:
-        yy = thymio["event.args"]
-        zz = thymio["prox.ground.delta"]
-    except KeyError:
-        time.sleep(1)
-    else:
-        ok = True
+Thymio_custom.wait_init()
 # %%
 map_l = []
 map_r = []

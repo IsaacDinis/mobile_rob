@@ -180,8 +180,8 @@ class MonteCarlo:
 
         # particles = self.particles
         max_index = particles_count - 1
-        iterations_count = round(particles_count/1000)  # 500
-        tests_count = round(particles_count/1000)  # 500
+        iterations_count = round(particles_count/100)  # 500
+        tests_count = round(particles_count/100)  # 500
         # assert iterations_count <= max_index and tests_count <= max_index
 
         # no replacement
@@ -253,7 +253,7 @@ class MonteCarlo:
         # return mean[0], mean[1], mean[2], 42
 
     def plot_state(self, base_filename=None, gt=np.array([-1, -1, -1]),
-                plot_sens_pos=True, map_back=None, num_particles=-1):
+                   map_back=None, num_particles=-1, sens=None):
         """ Write particles to an image """
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         fig = Figure((3, 3), tight_layout=True)
@@ -278,18 +278,26 @@ class MonteCarlo:
 
         ax.arrow(x, y, np.cos(theta) * 2, np.sin(theta) * 2, head_width=1, head_length=1.2, fc='blue', ec='blue')
 
-        if plot_sens_pos:
-            if gt[0] != -1 and gt[1] != -1:
-                rot = ut.rot_mat2(gt[2])
-                left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray(gt[0:2])
-                right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray(gt[0:2])
-            else:
-                rot = ut.rot_mat2(theta)
-                left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray([x, y])
-                right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray([x, y])
+        if sens is not None:
+            # if gt[0] != -1 and gt[1] != -1:
+            #     rot = ut.rot_mat2(gt[2])
+            #     left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray(gt[0:2])
+            #     right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray(gt[0:2])
+            # else:
+            rot = ut.rot_mat2(theta)
+            left_sensor_pos = rot.dot([7.2*ratioA0, 1.1*ratioA0]) + np.asarray([x, y])
+            right_sensor_pos = rot.dot([7.2*ratioA0, -1.1*ratioA0]) + np.asarray([x, y])
 
-            ax.plot(left_sensor_pos[0], left_sensor_pos[1], 'ro', markersize=1)
-            ax.plot(right_sensor_pos[0], right_sensor_pos[1], 'go', markersize=1)
+            if sens[0] > 500:
+                col = 'wo'
+            else:
+                col = 'ko'
+            ax.plot(left_sensor_pos[0], left_sensor_pos[1], col, markersize=1)
+            if sens[1] > 500:
+                col = 'wo'
+            else:
+                col = 'ko'
+            ax.plot(right_sensor_pos[0], right_sensor_pos[1], col, markersize=1)
 
         if base_filename is not None:
             canvas.print_figure(base_filename + '.png', dpi=300)
