@@ -13,7 +13,7 @@ plt.show()
 map_to_printA0 = np.kron(raw, np.ones((354, 354)))
 
 # %%
-# plt.imsave("maptest.png", mapA0, cmap='gray')
-plt.imsave("maptest_big.jpg", map_to_printA0, cmap='gray', dpi=300)
+plt.imsave("map_in_code.png", mapA0, cmap='gray')
+plt.imsave("map_to_print.jpg", map_to_printA0, cmap='gray', dpi=300)
 
 
