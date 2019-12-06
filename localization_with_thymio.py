@@ -35,7 +35,7 @@ map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM21", refreshing_rate=0.1)
+thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -52,11 +52,11 @@ theta = np.pi/2.
 read_reset_times = []
 
 # setting all the parameters   sigma_obs=150.
-loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=200000, sigma_obs=150., prop_uniform=0,
+loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=150000, sigma_obs=150., prop_uniform=0,
                  alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, theta])
 
 path = [np.array([x, y]), np.array([45, 45]), np.array([6, 60])]
-glob_ctrl = global_controller.GlobalController(path)
+glob_ctrl = global_controller.GlobalController(path, tubeTol = 4, outOfTubeAvancementTarget=3  )
 
 # remove previous output plots
 for fl in glob.glob(save_dir+"*"):
@@ -76,50 +76,53 @@ d_reck = np.array([x, y, theta])
 sum_dx = 0
 start_time = 0
 thymio.start_t = time.time()
-estimated_particle = [0]*3
+est_pos = [0] * 3
 while glob_ctrl.state is not "reachedGoal":  # i < 30:
 
-    if time.time() - start_time > T:
-        print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
-        sensor_left, sensor_right, dx, dy, dth = read_odometry(thymio)
-        sum_dx += dx
-        # odometry alone
-        norm_xy = np.sqrt(dx ** 2 + dy ** 2)
-        d_reck[0:2] += (ut.rot_mat2(d_reck[2]) @ np.asarray([dx, dy]).T).T
-        d_reck[2] += dth
+    # if time.time() - start_time > T:
+    print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
+    sensor_left, sensor_right, dx, dy, dth = read_odometry(thymio)
+    sum_dx += dx
+    # odometry alone
+    norm_xy = np.sqrt(dx ** 2 + dy ** 2)
+    d_reck[0:2] += (ut.rot_mat2(d_reck[2]) @ np.asarray([dx, dy]).T).T
+    d_reck[2] += dth
 
-        # localization
-        start_time = time.time()
-        loc.apply_command(dx, dy, dth)
-        loc.apply_obs_and_resample(sensor_left, sensor_right)
-        estimated_particle, confidence = loc.estimate_state()
-        duration = time.time() - start_time
+    # localization
+    start_time = time.time()
+    loc.apply_command(dx, dy, dth)
+    loc.apply_obs_and_resample(sensor_left, sensor_right)
+    est_pos, confidence = loc.estimate_state()
+    duration = time.time() - start_time
 
-        # print("Ground values:", sensor_left, sensor_right)
-        print("Odometry: {:0.2f} {:0.2f} {:0.2f}".format(dx, dy, dth))
-        print("Dead reckoning: {:0.2f} {:0.2f} {:0.2f}".format(d_reck[0], d_reck[1], d_reck[2])+",  sum dx:", sum_dx)
-        # print("Estimated state: ", ["{:0.2f}".format(x) for x in loc.estimated_particle])
+    # print("Ground values:", sensor_left, sensor_right)
+    print("Odometry: {:0.2f} {:0.2f} {:0.2f}".format(dx, dy, dth))
+    # print("Dead reckoning: {:0.2f} {:0.2f} {:0.2f}".format(d_reck[0], d_reck[1], d_reck[2])+",  sum dx:", sum_dx)
+    print("Estimated state: {:0.2f} {:0.2f} {:0.2f}".format(est_pos[0], est_pos[1], est_pos[2]))
+    if confidence < 0.7:
+        print("WARNING LOW CONFIDENCE:", confidence)
+    else:
         print("Confidence:", confidence)
 
-        plot_time = time.time()
-        if True:  # plot or not
-            loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
-                           num_particles=50, gt=d_reck, sens=[sensor_left, sensor_right], path=path)
-        print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
+    plot_time = time.time()
+    if True:  # plot or not
+        loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
+                       num_particles=50, gt=d_reck, sens=[sensor_left, sensor_right], path=path)
+    print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
-        # if i == 1:
-        #     thymio.set_var("motor.left.target", 80)
-        #     thymio.set_var("motor.right.target", 80)
-        i += 1
+    glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, "NavGlobal", )
+    # if i == 1:
+    #     thymio.set_var("motor.left.target", 80)
+    #     thymio.set_var("motor.right.target", 80)
+    i += 1
 
-        # if sum_dx >= 21. and not printed:
-        #     print("Motors stopped")
-        #     thymio.set_var("motor.left.target", 0)
-        #     thymio.set_var("motor.right.target", 0)
-        #     printed = True
-    else:
-        glob_ctrl.followPath(estimated_particle[0:2], estimated_particle[2], thymio, "NavGlobal")
-        time.sleep(0.1)  # necessary ?
+    # if sum_dx >= 21. and not printed:
+    #     print("Motors stopped")
+    #     thymio.set_var("motor.left.target", 0)
+    #     thymio.set_var("motor.right.target", 0)
+    #     printed = True
+    # else:
+    #     time.sleep(0.1)  # necessary ?
     # except:
     #     thymio.set_var("motor.target.left", 0)
     #     thymio.set_var("motor.target.right", 0)
