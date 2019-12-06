@@ -35,7 +35,7 @@ map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
+thymio = Thymio_custom.Thymio.serial(port="COM6", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -55,7 +55,7 @@ read_reset_times = []
 loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=150000, sigma_obs=150., prop_uniform=0,
                  alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, theta])
 
-path = [np.array([x, y]), np.array([45, 45]), np.array([6, 60])]
+path = [np.array([x, y]), np.array([45, 45]), np.array([10, 60]), np.array([40, 20])]
 glob_ctrl = global_controller.GlobalController(path, tubeTol = 4, outOfTubeAvancementTarget=3  )
 
 # remove previous output plots
@@ -64,9 +64,10 @@ for fl in glob.glob(save_dir+"*"):
 
 loc.plot_state(base_filename=save_dir+str(0), map_back=ground_map, num_particles=50, path=path)
 # %%
+print("bef")
 Thymio_custom.wait_init(thymio)
 Thymio_custom.reset_thymio(thymio)
-
+print("aft")
 
 # time.sleep(1)
 # printed = False

@@ -22,13 +22,15 @@ class GlobalController:
     MOV_ANGLE = 1
     MOV_STRAIGHT = 2
 
-    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10):
+    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10, cornerCut=2, noTurningDistance=6):
         self.tubeTol = tubeTol
         self.outOfTubeAvancementTarget = outOfTubeAvancementTarget
         self.angleInTubeTol = angleInTubeTol
         self.currentTargetID = 1
         self.state = "start"
         self.path = path
+        self.cornerCut=cornerCut
+        self.noTurningDistance=noTurningDistance
 
     @staticmethod
     def remap(x, in_min, in_max, out_min, out_max, constrain=True):
@@ -99,9 +101,9 @@ class GlobalController:
             return True
 
     @staticmethod
-    def has_reached_nextW(prevW, nextW, robotPos):
+    def has_reached_nextW(prevW, nextW, robotPos, cornerCut):
         proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
-        return proj>np.linalg.norm(nextW-prevW)
+        return (proj+cornerCut)>np.linalg.norm(nextW-prevW)
 
     def followPath(self, thymioPos, thymioTh, thymio, navType):  # ATTENTION Changé l'ordre de theta et pos - Loic
         """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including
@@ -112,7 +114,7 @@ class GlobalController:
         if navType == "NavGlobal":
             nextW = self.path[self.currentTargetID]
             lastW = self.path[self.currentTargetID - 1]
-            if GlobalController.has_reached_nextW(lastW, nextW, thymioPos):
+            if GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.cornerCut):
                 print("We reached a waypoint")
                 thymio.set_var("motor.right.target", 0)
                 thymio.set_var("motor.left.target", 0)
@@ -127,12 +129,15 @@ class GlobalController:
             if self.state == "start":
                 if GlobalController.is_inside_tube(lastW, nextW, thymioPos, self.tubeTol):
                     epsTh = GlobalController.compute_eps(thymioPos, nextW, thymioTh)
-                    if abs(epsTh) > np.deg2rad(self.angleInTubeTol):
+                    if abs(epsTh) > np.deg2rad(self.angleInTubeTol) and not GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.noTurningDistance):
                         self.state = "turnInTube"
                     else:
                         self.state = "straightInTube"
                 else:
-                    self.state = "turnOutTube"
+                    if not GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.noTurningDistance):
+                        self.state = "turnOutTube"
+                    else:
+                        self.state=self.state = "straightInTube"
             print("NavType: " + navType + " // self.state: " + self.state + " // pos : " + str(thymioPos))
 
             if self.state == "straightInTube":
