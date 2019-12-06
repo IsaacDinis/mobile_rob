@@ -266,11 +266,11 @@ class MonteCarlo:
         if map_back is not None:
             ax.imshow(np.uint8(map_back * 255))
 
-        # if path is not None:
-        #     p = np.array(path)
-        #     ax.plot(p, 'rx', markersize=1)
-        #     for
-
+        if path is not None:
+            p = np.array(path)
+            self.p = p
+            ax.plot(p[0,0], p[0,1], 'rx', markersize=3)
+            ax.plot(p[1:,0], p[1:,1], 'bx', markersize=3)
 
         if num_particles > 0:
             idx = np.random.choice(self.particles.shape[0], num_particles)

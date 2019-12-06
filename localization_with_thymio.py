@@ -35,7 +35,7 @@ map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
+thymio = Thymio_custom.Thymio.serial(port="COM21", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -62,8 +62,8 @@ glob_ctrl = global_controller.GlobalController(path)
 for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
-loc.plot_state(base_filename=save_dir+str(0), map_back=ground_map, num_particles=50)
-
+loc.plot_state(base_filename=save_dir+str(0), map_back=ground_map, num_particles=50, path=path)
+# %%
 Thymio_custom.wait_init(thymio)
 Thymio_custom.reset_thymio(thymio)
 
