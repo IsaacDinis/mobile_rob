@@ -145,6 +145,7 @@ class GlobalController:
             elif self.state == "turnInTube":
                 epsTh = GlobalController.compute_eps(thymioPos, nextW, thymioTh)
                 turn_angle(thymio, epsTh)
+                print("turning in tube " + str(epsTh))
                 self.state = "wait"
                 # thymioTh += epsTh  # fake odometry
 
