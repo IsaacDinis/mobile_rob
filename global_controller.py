@@ -14,7 +14,10 @@ import numpy as np
 from control import *
 from utils import normalize_angle_0_2pi, normalize_angle_minus_pi_plus_pi
 
+
 class GlobalController:
+    """ Princial function: followPath
+    """
     NO_ACTION = 0
     MOV_ANGLE = 1
     MOV_STRAIGHT = 2
@@ -100,12 +103,12 @@ class GlobalController:
         proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
         return proj>np.linalg.norm(nextW-prevW)
 
+    def followPath(self, thymioPos, thymioTh, thymio, navType):  # ATTENTION Changé l'ordre de theta et pos - Loic
+        """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including
+        starting waypoint.
+        self.currentTargetID shall be set to 1 in the beginning"""
 
-    def followPath(self, thymioTh, thymioPos, thymio):
-        """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including starting waypoint
-            self.currentTargetID shall be set to 1 in the beginning"""
-
-        global navType
+        # global navType
         if navType == "NavGlobal":
             nextW = self.path[self.currentTargetID]
             lastW = self.path[self.currentTargetID - 1]
@@ -115,7 +118,7 @@ class GlobalController:
                 thymio.set_var("motor.left.target", 0)
                 if self.currentTargetID == len(self.path) - 1:
                     print("the waypoint we reached was the goal ! ")
-                    self.state= "reachedGoal"
+                    self.state = "reachedGoal"
                 else:
                     self.currentTargetID += 1
                     nextW = self.path[self.currentTargetID]

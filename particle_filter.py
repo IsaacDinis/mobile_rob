@@ -253,7 +253,7 @@ class MonteCarlo:
         # return mean[0], mean[1], mean[2], 42
 
     def plot_state(self, base_filename=None, gt=np.array([-1, -1, -1]),
-                   map_back=None, num_particles=-1, sens=None):
+                   map_back=None, num_particles=-1, sens=None, path=None):
         """ Write particles to an image """
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         fig = Figure((3, 3), tight_layout=True)
@@ -265,6 +265,12 @@ class MonteCarlo:
 
         if map_back is not None:
             ax.imshow(np.uint8(map_back * 255))
+
+        # if path is not None:
+        #     p = np.array(path)
+        #     ax.plot(p, 'rx', markersize=1)
+        #     for
+
 
         if num_particles > 0:
             idx = np.random.choice(self.particles.shape[0], num_particles)

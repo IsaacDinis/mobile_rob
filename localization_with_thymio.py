@@ -9,7 +9,7 @@ import matplotlib.image as mpimg
 from particle_filter import *
 import utils as ut
 import Thymio_custom
-import control
+import global_controller
 
 
 def unitToSensor(value, table):
@@ -35,7 +35,7 @@ map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM10", refreshing_rate=0.1)
+thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -55,6 +55,9 @@ read_reset_times = []
 loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=200000, sigma_obs=150., prop_uniform=0,
                  alpha_xy=0.1, alpha_theta=0.1,  state_init=[x, y, theta])
 
+path = [np.array([x, y]), np.array([45, 45]), np.array([6, 60])]
+glob_ctrl = global_controller.GlobalController(path)
+
 # remove previous output plots
 for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
@@ -73,7 +76,8 @@ d_reck = np.array([x, y, theta])
 sum_dx = 0
 start_time = 0
 thymio.start_t = time.time()
-while i < 30:
+estimated_particle = [0]*3
+while glob_ctrl.state is not "reachedGoal":  # i < 30:
 
     if time.time() - start_time > T:
         print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
@@ -100,21 +104,22 @@ while i < 30:
         plot_time = time.time()
         if True:  # plot or not
             loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
-                           num_particles=50, gt=d_reck, sens=[sensor_left, sensor_right])
+                           num_particles=50, gt=d_reck, sens=[sensor_left, sensor_right], path=path)
         print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
-        if i == 1:
-            thymio.set_var("motor.left.target", 80)
-            thymio.set_var("motor.right.target", 80)
+        # if i == 1:
+        #     thymio.set_var("motor.left.target", 80)
+        #     thymio.set_var("motor.right.target", 80)
         i += 1
+
         # if sum_dx >= 21. and not printed:
         #     print("Motors stopped")
         #     thymio.set_var("motor.left.target", 0)
         #     thymio.set_var("motor.right.target", 0)
         #     printed = True
     else:
-        pass
-        time.sleep(0.1)
+        glob_ctrl.followPath(estimated_particle[0:2], estimated_particle[2], thymio, "NavGlobal")
+        time.sleep(0.1)  # necessary ?
     # except:
     #     thymio.set_var("motor.target.left", 0)
     #     thymio.set_var("motor.target.right", 0)
