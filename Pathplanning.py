@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from extremitypathfinder.extremitypathfinder import PolygonEnvironment as Environment
-from shapely.geometry import Polygon, LinearRing
+from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 
 import vision
@@ -42,9 +42,9 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     """will return path, thymio pos and thymio theta"""
 
 
-    img = cv2.imread("map_test\\map_test_more_complicated.png")
-    img = cv2.flip(img, 0)
-    # img = vision.capture_image_from_webcam(cam_capture)
+    # img = cv2.imread("map_test\\map_test_more_complicated.png")
+    # img = cv2.flip(img, 0)
+    img = vision.capture_image_from_webcam(cam_capture)
     cv2.imshow("proj", img)
     pix_to_unit_x = 27*3/img.shape[1]
     pix_to_unit_y = 38 * 3 / img.shape[0]
