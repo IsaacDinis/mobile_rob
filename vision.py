@@ -14,6 +14,8 @@ def capture_image_from_webcam(webcam_number):
         cv2.imshow("Display window", frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32:
+            cap.release()
+            cv2.destroyAllWindows()
             break
     frame = cv2.flip(frame, 0)
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
