@@ -6,7 +6,7 @@ def nothing(x):
     pass
 
 
-use_image = True
+use_image = False
 
 
 open('color_calibration.txt', 'w+').close()  # clear file
@@ -16,7 +16,18 @@ i = 0
 if use_image:
     frame = cv2.imread("map_test/map_test.PNG")
 else:
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    while True:
+        _, frame = cap.read()
+        image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.imshow("Display window", frame)
+        k = cv2.waitKey(5) & 0xFF
+        if k == 32:
+            _, frame = cap.read()
+            cap.release()
+            cv2.destroyAllWindows()
+            break
 
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)
@@ -30,8 +41,7 @@ text = "set {} detection, press space when done".format(colors[0])
 print(text)
 
 while True:
-    if not use_image:
-        _, frame = cap.read()
+
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     l_h = cv2.getTrackbarPos("L - H", "Trackbars")
     l_s = cv2.getTrackbarPos("L - S", "Trackbars")
