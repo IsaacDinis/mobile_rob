@@ -26,7 +26,7 @@ class Obstacle:
             self.vertexExpanded.append( (pointArr[0], pointArr[1]))
 
 
-def get_map_info(margeObs=9, plotFlag=False):
+def take_picture_to_init(margeObs=9, plotFlag=False):
     """will return path, thymio pos and thymio theta"""
 
     MAP_MAX_X_AXIS= 81
@@ -88,6 +88,8 @@ def get_map_info(margeObs=9, plotFlag=False):
         unzippedPath = list(zip(*path))
         plt.plot(unzippedPath[0], unzippedPath[1], '--', color='black')
         plt.show()
-    return path, [thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit], thymioPos.theta
-if __name__ == "__main__":
-   [path, pos, th] = get_map_info(9, True)
+    return path, thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit, thymioPos.theta
+
+
+# if __name__ == "__main__":
+#    [path, pos, th] = get_map_info(9, True)

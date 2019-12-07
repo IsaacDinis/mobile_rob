@@ -1,3 +1,8 @@
+# Code adapted from:
+# Wang S., Colas F., Liu M., Mondada F., Magnenat S. (2018) Localization of Inexpensive Robots with Low-Bandwidth
+# Sensors. In: Groß R. et al. (eds) Distributed Autonomous Robotic Systems. Springer Proceedings in Advanced
+# Robotics, vol 6. Springer, Cham
+
 import numpy as np
 from numba import jit
 import utils as ut

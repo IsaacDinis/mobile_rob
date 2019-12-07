@@ -83,9 +83,17 @@ def is_in_bound(shape, pos):
     y = xyW2C(pos[1])
     return is_in_bound_cell(shape, x, y)
 
-@jit(nopython=True)
-def weird(N_uniform, mapshape):
-    tmp = np.array([np.float(mapshape[0]), np.float(mapshape[1]), np.pi * 2.])
-    new_particles = np.multiply(np.random.uniform(0, 1, (N_uniform, 3)), tmp)
-    return new_particles
+def unit_to_sensor(value, table):
+    assert len(table) == 17
+    table_bin = int(value * 16)
+    r = value - (1. / 16.) * table_bin
+    if table_bin == 16:
+        return table[16]
+    return float(table[table_bin]) * (1. - r) + float(table[table_bin + 1]) * r
+
+# @jit(nopython=True)
+# def weird(N_uniform, mapshape):
+#     tmp = np.array([np.float(mapshape[0]), np.float(mapshape[1]), np.pi * 2.])
+#     new_particles = np.multiply(np.random.uniform(0, 1, (N_uniform, 3)), tmp)
+#     return new_particles
 
