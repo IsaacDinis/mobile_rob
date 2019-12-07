@@ -375,6 +375,8 @@ class Thymio:
         self.refreshing_trigger = threading.Event()  # initially wait() blocks
         self.reset_odom = False
         self.nav_flag = "global"
+        self.local_nav_state = [0, 0]
+        self.local_nav_dir = "none"
 
         def do_refresh():
             while not self.terminating:
@@ -387,10 +389,8 @@ class Thymio:
 
                 if direction != "none":
                     self.nav_flag = "local"
+                    self.local_nav_dir = direction
 
-                if self.nav_flag == "local":
-                    local_avoidance(self, direction)
-                    self.nav_flag = "global"
                 # if self.reset_odom:
                 #     # ## debug
                 #     # table = self["event.args"]

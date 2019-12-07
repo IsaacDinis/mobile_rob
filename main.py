@@ -10,7 +10,7 @@ import utils as ut
 import Thymio_custom
 import global_controller
 import Pathplanning
-
+from local_avoidance import local_avoidance
 
 def read_odometry(thymio):
     sensors = thymio["prox.ground.delta"]
@@ -103,7 +103,13 @@ while glob_ctrl.state is not "reachedGoal":  # i < 30
     print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
     glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
-    #  local?
+
+    if thymio.nav_flag == "local":
+        local_avoidance(thymio)
+        if thymio.local_nav_state[0] == 0 and thymio.local_nav_state[1] == 0:
+            thymio.nav_flag == "global"
+            thymio.local_nav_dir == "none"
+
     i += 1
 
 
