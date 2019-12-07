@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from extremitypathfinder.extremitypathfinder import PolygonEnvironment as Environment
 
-from vision import *
+import vision
 import cv2
 
 
@@ -48,26 +48,25 @@ class Obstacle:
 # warped = map_projection(img)
 # resized = resize_img(warped, 1.5)
 
-img = capture_image_from_webcam(1)
+img = vision.capture_image_from_webcam(1)
 pix_to_unit = 27*3/img.shape[1]
 
-thymioPos = detect_thymio(img)
+thymioPos = vision.detect_thymio(img)
 if thymioPos:
     start = [thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit]
 
-goal = detect_goal(img)
+goal = vision.detect_goal(img)
 goal = (goal[0]*pix_to_unit, goal[1]*pix_to_unit)
-obstaclesListIsaac = detect_obstacles(img)
+obstacles_vision = vision.detect_obstacles(img)
 
 obsList = []
-for obstacleIsaac in obstaclesListIsaac:
-    obstacleIsaac = obstacleIsaac.astype('float64')
-    obstacleIsaac *= pix_to_unit
-    a = pix_to_unit * obstacleIsaac
-    vertexIsaac = np.ndarray.tolist(obstacleIsaac.squeeze())
-    # vertexIsaac.reverse()
-    obstacleMax = Obstacle(vertexIsaac)
-    obsList.append(obstacleMax)
+for obst_vis in obstacles_vision:
+    obst_vis = obst_vis.astype('float64')
+    obst_vis *= pix_to_unit
+    a = pix_to_unit * obst_vis
+    vertex_vision = np.ndarray.tolist(obst_vis.squeeze())
+
+    obsList.append(Obstacle(vertex_vision))
 
 
 for obs in obsList:
