@@ -6,6 +6,7 @@
 import threading
 import numpy as np
 import time
+from local_avoidance import *
 
 
 # our function
@@ -373,6 +374,7 @@ class Thymio:
         self.refreshing_timeout = None
         self.refreshing_trigger = threading.Event()  # initially wait() blocks
         self.reset_odom = False
+        self.nav_flag = "global"
 
         def do_refresh():
             while not self.terminating:
@@ -381,6 +383,13 @@ class Thymio:
                 self.get_variables()
 
                 self.increment_odometry()
+                direction = check_obstacle(self)
+
+                if direction != "none":
+                    self.nav_flag = "local"
+
+                if self.nav_flag == "local":
+                    local_avoidance(self, direction)
                 # if self.reset_odom:
                 #     # ## debug
                 #     # table = self["event.args"]
