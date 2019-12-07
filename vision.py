@@ -5,6 +5,22 @@ import math
 
 colors = ["blue", "red", "pink", "green"]
 
+def capture_image_from_webcam(webcam_number):
+    cap = cv2.VideoCapture(webcam_number, cv2.CAP_DSHOW)
+    while True:
+        _, frame = cap.read()
+        image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.imshow("Display window", frame)
+        k = cv2.waitKey(5) & 0xFF
+        if k == 32:
+            break
+    frame = cv2.flip(frame, 0)
+    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    frame = map_projection(frame)
+    frame = resize_img(frame, 1.5)
+    return frame
+
 
 def resize_img(frame, scale_factor):
     width = int(frame.shape[1] * scale_factor)
@@ -120,19 +136,29 @@ def edge_detection(frame):
 
 
 def detect_corners(frame, color):
-    _, mask = color_detection(frame, color)
-    #  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #  gray = cv2.GaussianBlur(gray, (5, 5), 0)
-    corners = cv2.goodFeaturesToTrack(mask, 20, 0.01, 20, useHarrisDetector=True)
-    if corners is not None:
-        corners = np.int0(corners)
-    return corners
+    _, mask = color_detection(frame, "blue")
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) == 4:
+        corners = list()
+        for i in range(4):
+            pos = list()
+            cnt = contours[i]
+            M = cv2.moments(cnt)
+            pos.append(int(M["m10"] / M["m00"]))
+            pos.append(int(M["m01"] / M["m00"]))
+            corners.append(pos)
+        corners = np.asarray(corners)
+        return corners
+
+    else:
+        print("corners not found")
+        return 0
+
 
 
 def get_map_corners(corners):
     rect = np.zeros((4, 2), dtype="float32")
-    corners = corners.reshape([corners.shape[0], 2])  # 3d matrix to 2d
-
     s = corners.sum(axis=1)
     rect[0] = corners[s.argmin()]
     rect[2] = corners[s.argmax()]

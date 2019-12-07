@@ -41,19 +41,23 @@ class Obstacle:
 # goal = (27,25-4)
 
 
-img = cv2.imread("map_test/map_test_more_complicated.png")
-img = cv2.flip(img, 0)
+# img = cv2.imread("map_test/map_test_more_complicated.png")
+# img = cv2.flip(img, 0)
+# img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+#
+# warped = map_projection(img)
+# resized = resize_img(warped, 1.5)
 
-warped = map_projection(img)
-resized = resize_img(warped, 1.5)
-pix_to_unit = 27/(resized.shape[0]*3)
-thymioPos = detect_thymio(resized)
+img = capture_image_from_webcam(1)
+pix_to_unit = 27*3/img.shape[1]
+
+thymioPos = detect_thymio(img)
 if thymioPos:
     start = [thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit]
 
-goal = detect_goal(resized)
+goal = detect_goal(img)
 goal = (goal[0]*pix_to_unit, goal[1]*pix_to_unit)
-obstaclesListIsaac = detect_obstacles(resized)
+obstaclesListIsaac = detect_obstacles(img)
 
 obsList = []
 for obstacleIsaac in obstaclesListIsaac:

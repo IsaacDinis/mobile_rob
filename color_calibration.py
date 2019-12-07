@@ -16,7 +16,7 @@ i = 0
 if use_image:
     frame = cv2.imread("map_test/map_test.PNG")
 else:
-    cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)

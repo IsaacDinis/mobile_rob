@@ -1,9 +1,7 @@
 from vision import *
 import cv2
 
-
-img = cv2.imread("map_test/map_test.PNG")
-img = cv2.flip(img, 0)
+img = cv2.imread("map_test/map_test.png")
 # cap = cv2.VideoCapture(1 , cv2.CAP_DSHOW)
 # while True:
 #     _, img = cap.read()
@@ -11,7 +9,8 @@ img = cv2.flip(img, 0)
 #     k = cv2.waitKey(5) & 0xFF
 #     if k == 27:
 #         break
-
+# img = cv2.flip(img, 0)
+# img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 cv2.imshow("Display window", img)
 warped = map_projection(img)
@@ -24,7 +23,7 @@ if thymio:
 
 goal_pos = detect_goal(resized)
 if goal_pos:
-    draw_goal(resized,goal_pos)
+    draw_goal(resized, goal_pos)
 
 obstacles = detect_obstacles(resized)
 
