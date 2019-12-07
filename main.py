@@ -103,19 +103,28 @@ while glob_ctrl.state is not "reachedGoal":  # i < 30
     print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
     glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
+    if glob_ctrl.state == "straightInTube":
+        thymio.set_var_array("leds.top", [0, 255, 0])  # green
+    elif thymio.state == "local":
+        thymio.set_var_array("leds.top", [255, 255, 0])  # yellow
+    elif thymio.state == "global":
+        thymio.set_var_array("leds.top", [0, 0, 255])  # blue
 
     if thymio.nav_flag == "local":
         local_avoidance(thymio)
-        if thymio.local_nav_state[0] == 0 and thymio.local_nav_state[1] == 0:
-            thymio.nav_flag == "global"
-            thymio.local_nav_dir == "none"
+        # if thymio.local_nav_state[0] == 0 and thymio.local_nav_state[1] == 0:
+        #     thymio.nav_flag = "global"
+        #     thymio.local_nav_dir = "none"
 
     i += 1
+    time.sleep(0.2)  # to try
 
 
 #     lost = np.sum(np.asarray(thymio.debug_odom), 0);
 thymio.set_var("motor.left.target", 0)
 thymio.set_var("motor.right.target", 0)
+thymio.set_var_array("leds.top", [255, 0, 127])
+
 
 print("past dl, past dr:", thymio.past_dl, thymio.past_dr)
 # with open("output\\d_odom.txt", "w")as f:  # debug

@@ -31,6 +31,7 @@ def reset_thymio(thymio):
     thymio.set_var("mult_right", 0)
     thymio.set_var("dist_left", 0)
     thymio.set_var("dist_right", 0)
+    thymio.set_var_array("leds.top", [0, 0, 0])  # green
 
 
 class Message:
@@ -378,34 +379,24 @@ class Thymio:
         self.local_nav_state = [0, 0]
         self.local_nav_dir = "none"
 
-        def do_refresh():
+        def do_refresh():  ############################################################# IT IS HERE
             while not self.terminating:
                 self.refreshing_trigger.wait(self.refreshing_timeout)
                 self.refreshing_trigger.clear()
                 self.get_variables()
 
                 self.increment_odometry()
-                direction = check_obstacle(self)
+                if self.nav_flag == "global":
+                    check_obstacle(self)  # modifies self.local_nav_dir
 
-                if direction != "none":
+                if self.local_nav_dir != "none":
+                    if self.nav_flag == "global":
+                        self.set_var("movement_mode", 0)
+                        self.set_var("motor.left.target", 0)
+                        self.set_var("motor.right.target", 0)
+
                     self.nav_flag = "local"
-                    self.local_nav_dir = direction
-
-                # if self.reset_odom:
-                #     # ## debug
-                #     # table = self["event.args"]
-                #     # dx, dy, dtheta = table[0:3]
-                #     # if dx > 2 ** 15:
-                #     #     dx -= 2 ** 16
-                #     # if dy > 2 ** 15:
-                #     #     dy -= 2 ** 16
-                #     # if dtheta > 2 ** 15:
-                #     #     dtheta -= 2 ** 16
-                #     # self.debug_odom.append([dx, dy, dtheta])
-                #     # ## end debug
-                #
-                #     # self.set_var("d_theta", 0)
-                #     self.reset_odom = False
+                    # self.local_nav_dir = direction
 
         self.refresh_thread = threading.Thread(target=do_refresh)
         self.refresh_thread.start()

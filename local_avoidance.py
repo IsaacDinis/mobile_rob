@@ -1,26 +1,30 @@
 from control import *
-from Thymio_custom import Thymio
+# from Thymio_custom import Thymio
 import numpy as np
 from time import sleep
 
 
 def check_obstacle(thymio):
-    threshold = 2000
+    threshold = 2500
     try:
         thymio["prox.horizontal"]
     except KeyError:
-        return "none"
+        thymio.local_nav_dir = "none"
+        return
     try:
         thymio["prox.horizontal"][4]
     except IndexError:
-        return "none"
+        thymio.local_nav_dir = "none"
+        return
 
-    if thymio["prox.horizontal"][0] > threshold:
-        return "right"
-    elif thymio["prox.horizontal"][4] > threshold:
-        return "left"
+    if thymio["prox.horizontal"][0] > threshold or thymio["prox.horizontal"][1] > threshold:
+        thymio.local_nav_dir = "obs_left"
+    elif thymio["prox.horizontal"][4] > threshold or thymio["prox.horizontal"][3] > threshold:
+        thymio.local_nav_dir = "obs_right"
+    elif thymio["prox.horizontal"][2] > threshold:
+        turn_angle(thymio, np.pi/4.)
     else:
-        return "none"
+        thymio.local_nav_dir = "none"
 
 
 def local_avoidance(thymio):
@@ -29,13 +33,13 @@ def local_avoidance(thymio):
     if thymio["event.args"][12]:
         return
 
-    if state[0] == 0:
+    if state[0] == 0:  # has to face the obstacle
         new_val = thymio["prox.horizontal"][2]
         old_val = 0
         while new_val >= old_val:
-            if direction == "left":
+            if direction == "obs_left":
                 turn_angle(thymio, 0.1)  # turn left with angle = 1 rad
-            elif direction == "right":
+            elif direction == "obs_right":
                 turn_angle(thymio, -0.1)  # turn left with angle = 1 rad
             while thymio["event.args"][12]:
                 pass
@@ -43,40 +47,50 @@ def local_avoidance(thymio):
             new_val = thymio["prox.horizontal"][2]
         # thymio is now facing the obstacle
         thymio.local_nav_state = [1,0]
+        # print("state 1 done")
         return
 
     elif state[0] == 1:
-        if direction == "left":
+        if direction == "obs_left":
             turn_angle(thymio, -np.pi / 2)
-        elif direction == "right":
+        elif direction == "obs_right":
             turn_angle(thymio, np.pi / 2)
         # thymio is perpendicular to the obstacle
-        thymio.local_nav_state=[2,0]
+        # print("state 2 done")
+        thymio.local_nav_state = [2, 0]
         return
 
-
     elif state[0] == 2:
-        if state[1]==0:
+        if state[1] == 0:
             move_distance(thymio, 10)
-            thymio.local_nav_state = [2,1]
+            thymio.local_nav_state = [2, 1]
+            # print("state 2.0 done")
             return
         elif state[1] == 1:
-            if direction == "left":
+            if direction == "obs_left":
                 turn_angle(thymio, np.pi/2)
-            elif direction == "right":
+            elif direction == "obs_right":
                 turn_angle(thymio, -np.pi/2)
+            # print("state 2.1 done")
             thymio.local_nav_state = [2, 2]
             return
-        elif state[1]==2:
-            if thymio["prox.horizontal"][2] == 0:
-                thymio.local_nav_state = [0,0]
+        elif state[1] == 2:
+            prox = thymio["prox.horizontal"][0:5]
+            if max(prox) == 0:  # something detected by the Thymio?
+                thymio.local_nav_state = [3, 0]
+                move_distance(thymio, 10)
                 return
-            elif direction == "left":
+            elif direction == "obs_left":
                 turn_angle(thymio, -np.pi/2)
-            elif direction == "right":
+            elif direction == "obs_right":
                 turn_angle(thymio, np.pi/2)
-            thymio.local_nav_state = [2,0]
+            thymio.local_nav_state = [2, 0]
+            # print("state 2.2  done")
             return
+    elif state[0] == 3:
+        thymio.local_nav_state = [0, 0]
+        print("Local avoidance done!")
+        thymio.nav_flag = "global"
     return
 
 
