@@ -26,7 +26,7 @@ map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
 # connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM6", refreshing_rate=0.1)
+thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -43,9 +43,9 @@ ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 # path = [np.array([x, y]), np.array([45, 45]), np.array([10, 60]), np.array([40, 20])]  # fake path
 # read_reset_times = []
 
-path, x, y, theta = Pathplanning.take_picture_to_init(margeObs=9, plotFlag=False)
-
-glob_ctrl = global_controller.GlobalController(path, tubeTol=4, outOfTubeAvancementTarget=3)
+path, x, y, theta = Pathplanning.take_picture_to_init(margeObs=9, plotFlag=True, cam_capture=2)
+path = [np.array(tup) for tup in path]
+glob_ctrl = global_controller.GlobalController(path, tubeTol=4, outOfTubeAvancementTarget=3, noTurningDistance=3 )
 
 # setting up all the parameters
 loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=150000, sigma_obs=150., prop_uniform=0,

@@ -1,11 +1,20 @@
 from control import *
-from Thymio_custom import Thymio
+# from Thymio_custom import Thymio
 import numpy as np
 from time import sleep
 
 
-def check_obstacle(self):
+def check_obstacle(thymio):
     threshold = 2000
+    try:
+        thymio["prox.horizontal"]
+    except KeyError:
+        return "none"
+    try:
+        thymio["prox.horizontal"][4]
+    except IndexError:
+        return "none"
+
     if thymio["prox.horizontal"][0] > threshold:
         return "right"
     elif thymio["prox.horizontal"][4] > threshold:

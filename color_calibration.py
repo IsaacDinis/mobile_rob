@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import sys
 
 
 def nothing(x):
@@ -9,21 +10,23 @@ def nothing(x):
 use_image = False
 
 
-open('color_calibration.txt', 'w+').close()  # clear file
+open('data\\color_calibration.txt', 'w+').close()  # clear file
 colors = ["blue", "red", "pink", "green"]
 i = 0
 
 if use_image:
     frame = cv2.imread("map_test/map_test.PNG")
 else:
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  # CHANGE CAM NUMBER HERE
     while True:
         _, frame = cap.read()
         image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
                             0.5, (255, 255, 255), 1, cv2.LINE_AA)
         cv2.imshow("Display window", frame)
         k = cv2.waitKey(5) & 0xFF
-        if k == 32:
+        if k == 27:
+            sys.exit(0)
+        elif k == 32:
             _, frame = cap.read()
             cap.release()
             cv2.destroyAllWindows()
@@ -64,7 +67,7 @@ while True:
 
     if key == 32:  # space pressed
         i += 1
-        with open("color_calibration.txt", "a") as text_file:
+        with open("data\\color_calibration.txt", "a") as text_file:
             print(f"{l_h} {l_s} {l_v} {u_h} {u_s} {u_v}", file=text_file)
             cv2.setTrackbarPos("L - H", "Trackbars", 0)
             cv2.setTrackbarPos("L - S", "Trackbars", 0)

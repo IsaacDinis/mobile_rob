@@ -17,8 +17,8 @@ def capture_image_from_webcam(webcam_number):
             cap.release()
             cv2.destroyAllWindows()
             break
-    frame = cv2.flip(frame, 0)
-    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    # frame = cv2.flip(frame, 0)
+    frame = cv2.transpose(frame)
     frame = map_projection(frame)
     frame = resize_img(frame, 1.5)
     return frame
@@ -33,7 +33,7 @@ def resize_img(frame, scale_factor):
 
 
 def color_detection(frame, color):
-    with open("color_calibration.txt", "r") as text_file:  # get mask values from file
+    with open("data\\color_calibration.txt", "r") as text_file:  # get mask values from file
         lines = text_file.read().splitlines()
         line = lines[colors.index(color)]
         line = list(map(int, line.split(' ')))  # converts str to int

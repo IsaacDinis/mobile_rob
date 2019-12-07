@@ -390,6 +390,7 @@ class Thymio:
 
                 if self.nav_flag == "local":
                     local_avoidance(self, direction)
+                    self.nav_flag = "global"
                 # if self.reset_odom:
                 #     # ## debug
                 #     # table = self["event.args"]

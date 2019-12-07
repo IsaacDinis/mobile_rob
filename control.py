@@ -2,7 +2,7 @@ import numpy as np
 
 
 import utils as ut
-from Thymio_custom import Thymio
+# from Thymio_custom import Thymio
 
 ANGLE_ONLY = 1
 LINE_ONLY = 2

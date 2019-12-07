@@ -111,7 +111,7 @@ class GlobalController:
         self.currentTargetID shall be set to 1 in the beginning"""
 
         # global navType
-        if navType == "NavGlobal":
+        if navType == "global":
             nextW = self.path[self.currentTargetID]
             lastW = self.path[self.currentTargetID - 1]
             if GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.cornerCut):
@@ -129,12 +129,17 @@ class GlobalController:
             if self.state == "start":
                 if GlobalController.is_inside_tube(lastW, nextW, thymioPos, self.tubeTol):
                     epsTh = GlobalController.compute_eps(thymioPos, nextW, thymioTh)
-                    if abs(epsTh) > np.deg2rad(self.angleInTubeTol) and not GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.noTurningDistance):
-                        self.state = "turnInTube"
+                    if abs(epsTh) > np.deg2rad(self.angleInTubeTol) :
+                        if not GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.noTurningDistance):
+                            self.state = "turnInTube"
+                        else:
+                            print("inside the NO turning distance")
+                            self.state = "straightInTube"
                     else:
                         self.state = "straightInTube"
                 else:
                     if not GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.noTurningDistance):
+                        print("inside the NO turning distance")
                         self.state = "turnOutTube"
                     else:
                         self.state=self.state = "straightInTube"
@@ -200,7 +205,7 @@ if __name__ == "__main__":
             ok = True
         time.sleep(0.5)
 
-    navType = "NavGlobal"  # TODO isaac : refresh() is going to modify this var
+    navType = "global"  # TODO isaac : refresh() is going to modify this var
     globalcontroller= GlobalController([np.array([1, 1]), np.array([10, 10]), np.array([15, 5])] )
     while 1:
         time.sleep(1) #fake lag for future particule filter

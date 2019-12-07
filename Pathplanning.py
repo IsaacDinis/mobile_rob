@@ -26,31 +26,31 @@ class Obstacle:
             self.vertexExpanded.append( (pointArr[0], pointArr[1]))
 
 
-def take_picture_to_init(margeObs=9, plotFlag=False):
+def take_picture_to_init(margeObs=9, plotFlag=False, cam_capture=2):
     """will return path, thymio pos and thymio theta"""
 
     MAP_MAX_X_AXIS= 81
     MAP_MAX_Y_AXIS= 114
 
-    img = cv2.imread("map_test/map_test_more_complicated.png")
-    img = cv2.flip(img, 0)
-    # img = vision.capture_image_from_webcam(1)
-
-    pix_to_unit = 27*3/img.shape[1]
-
+    # img = cv2.imread("map_test\\map_test_more_complicated.png")
+    # img = cv2.flip(img, 0)
+    img = vision.capture_image_from_webcam(cam_capture)
+    cv2.imshow("proj", img)
+    pix_to_unit_x = 27*3/img.shape[1]
+    pix_to_unit_y = 38 * 3 / img.shape[0]
     thymioPos = vision.detect_thymio(img)
     if thymioPos:
-        start = [thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit]
+        start = [thymioPos.pos.x*pix_to_unit_x, thymioPos.pos.y*pix_to_unit_y]
 
     goal = vision.detect_goal(img)
-    goal = (goal[0]*pix_to_unit, goal[1]*pix_to_unit)
+    goal = (goal[0]*pix_to_unit_x, goal[1]*pix_to_unit_y)
     obstacles_vision = vision.detect_obstacles(img)
 
     obsList = []
     for obst_vis in obstacles_vision:
         obst_vis = obst_vis.astype('float64')
-        obst_vis *= pix_to_unit
-        a = pix_to_unit * obst_vis
+        obst_vis[:, :, 0] *= pix_to_unit_x
+        obst_vis[:, :, 1] *= pix_to_unit_y
         vertex_vision = np.ndarray.tolist(obst_vis.squeeze())
 
         obsList.append(Obstacle(vertex_vision, margeObs))
@@ -87,8 +87,10 @@ def take_picture_to_init(margeObs=9, plotFlag=False):
     if plotFlag:
         unzippedPath = list(zip(*path))
         plt.plot(unzippedPath[0], unzippedPath[1], '--', color='black')
+        plt.xlim(0, MAP_MAX_X_AXIS)
+        plt.ylim(0, MAP_MAX_Y_AXIS)
         plt.show()
-    return path, thymioPos.pos.x*pix_to_unit, thymioPos.pos.y*pix_to_unit, thymioPos.theta
+    return path, thymioPos.pos.x*pix_to_unit_x, thymioPos.pos.y*pix_to_unit_y, thymioPos.theta
 
 
 # if __name__ == "__main__":
