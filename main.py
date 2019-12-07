@@ -103,6 +103,7 @@ while glob_ctrl.state is not "reachedGoal":  # i < 30
     print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
     glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
+    #  local?
     i += 1
 
 
