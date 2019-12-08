@@ -184,7 +184,7 @@ class GlobalController:
                         self.state = "turnOutTube"
                     else:
                         self.state=self.state = "straightInTube"
-            print("NavType: " + navType + " // self.state: " + self.state + " // pos : " + str(thymioPos))
+            print("NavType: " + navType + " // self.state: " + self.state )
 
             if self.state == "straightInTube":
                 thymio.set_var("motor.right.target", 80)
