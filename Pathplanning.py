@@ -48,9 +48,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     # cv2.imshow("proj", img)
     pix_to_unit_x = 27*3/img.shape[1]
     pix_to_unit_y = 38*3/img.shape[0]
-    thymioPos = vision.detect_thymio(img)
-    if thymioPos:
-        thymioCoord = [thymioPos.pos.x*pix_to_unit_x, thymioPos.pos.y*pix_to_unit_y]
+    thymioCoord = vision.detect_thymio(img)
 
     goal = vision.detect_goal(img)
     goal = (goal[0]*pix_to_unit_x, goal[1]*pix_to_unit_y)
@@ -70,10 +68,10 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
         for j in range(i+1, len(obsList) ):
             if obsList[i].expandEnabled and obsList[j].expandEnabled and obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
 
-                obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded ])
+                obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded])
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
-    return thymioCoord[0], thymioCoord[1], thymioPos.theta, goal, obsList
+    return thymioCoord[0]*pix_to_unit_x, thymioCoord[1]*pix_to_unit_y, thymioCoord[2], goal, obsList
 
 def find_path(thymioCoord, goal, obsList, plotFlag=True):
     if plotFlag:
