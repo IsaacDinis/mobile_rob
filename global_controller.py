@@ -122,14 +122,14 @@ class GlobalController:
             v2 = self.thymioPos - lastW
             if np.cross(v1,v2)<=0: # where are on the right of our line
                 if 0 < eps < np.pi/2:
-                    return "True out tube, right"
+                    return True
                 else:
-                    return "False out tube, right"
+                    return False
             else: #we are on the left of out line
                 if -np.pi/2 < eps < 0:
-                    return "True out tube, left"
+                    return True
                 else:
-                    return "False out tube, left"
+                    return False
 
 
 
