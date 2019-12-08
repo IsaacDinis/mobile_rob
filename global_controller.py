@@ -31,6 +31,8 @@ class GlobalController:
         self.path = path
         self.cornerCut=cornerCut
         self.noTurningDistance=noTurningDistance
+        self.thymioPos=0
+        self.thymioTh=0
 
     @staticmethod
     def remap(x, in_min, in_max, out_min, out_max, constrain=True):
