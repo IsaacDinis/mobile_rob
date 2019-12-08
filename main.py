@@ -48,7 +48,7 @@ for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
 # plot the inital state
-loc.plot_state( map_back=ground_map, num_particles=50) #, path=path)  # base_filename=save_dir+str(0)
+loc.plot_state(map_back=ground_map, num_particles=50, path=path)  # base_filename=save_dir+str(0)
 
 Thymio_custom.wait_init(thymio)
 Thymio_custom.reset_thymio(thymio)
@@ -86,7 +86,7 @@ try:
         # plotting
         plot_time = time.time()  # yes it takes time !
         loc.plot_state(map_back=ground_map, num_particles=50, odom=d_reck,
-                       sens=[sensor_left, sensor_right], path=path)  # base_filename=save_dir+str(i),
+                       sens=[sensor_left, sensor_right], path=path, base_filename=save_dir+str(i))
         print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
         glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
@@ -103,7 +103,8 @@ try:
         time.sleep(0.2)  # slow down the loop
 
     thymio.set_var_array("leds.top", [255, 0, 127])  # pink when loop is exited normally --> goal reached
-except KeyboardInterrupt:
+except:  # Odometry: 0.00 0.00 0.00
+
     pass
 
 control.stop_thymio(thymio)

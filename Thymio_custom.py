@@ -396,10 +396,10 @@ class Thymio:
                     else:
                         self.local_nav_dir="none"
                 if self.local_nav_dir != "none":
+                    self.nav_flag = "local"
                     if self.nav_flag == "global":
                         ctrl.stop_thymio(self)
 
-                    self.nav_flag = "local"
                     # self.local_nav_dir = direction
 
         self.refresh_thread = threading.Thread(target=do_refresh)
