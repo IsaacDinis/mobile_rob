@@ -194,6 +194,7 @@ class GlobalController:
 
             elif self.state == "wait":
                 if thymio["event.args"][12] == GlobalController.NO_ACTION:
+                    print("has finished waiting")
                     self.state = "start"
 
             elif self.state == "turnOutTube":
