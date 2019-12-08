@@ -422,6 +422,15 @@ class Thymio:
     def __exit__(self, type, value, traceback):
         self.close()
 
+
+    def read_odometry(self):
+        sensors = self["prox.ground.delta"]
+        dx, dy, dtheta = self.delta_x, self.delta_y, self.delta_th
+
+        # reset the odometry delta values because we read them
+        self.delta_x, self.delta_y, self.delta_th = 0., 0., 0.
+        return sensors[0], sensors[1], dx, dy, dtheta
+
     def increment_odometry(self):
         """ Added function returning the deltas x, y, theta since its last call"""
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension

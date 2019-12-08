@@ -13,16 +13,6 @@ import Pathplanning
 import control
 from local_avoidance import local_avoidance
 
-
-def read_odometry(thymio):
-    sensors = thymio["prox.ground.delta"]
-    dx, dy, dtheta = thymio.delta_x, thymio.delta_y, thymio.delta_th
-
-    # reset the odometry delta values because we read them
-    thymio.delta_x, thymio.delta_y, thymio.delta_th = 0., 0., 0.
-    return sensors[0], sensors[1], dx, dy, dtheta
-
-
 map_file = "data\\mapA0.png"
 save_dir = "output\\particles_"
 
@@ -71,7 +61,7 @@ try:
     while glob_ctrl.state is not "reachedGoal":
 
         print("----------------------", i, "t{:0.2f}".format(time.time()-thymio.start_t))
-        sensor_left, sensor_right, dx, dy, dth = read_odometry(thymio)
+        sensor_left, sensor_right, dx, dy, dth = thymio.read_odometry()
 
         # localization
         start_t_loc = time.time()
