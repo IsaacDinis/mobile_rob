@@ -28,7 +28,7 @@ ground_map_left = vUnitToSensor(np.transpose(ground_map), config['left'])
 ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 
 # taking a picture to init the position of all the elements
-x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=10, cam_capture=0)
+x, y, theta, goal, obsList, vision_img = Pathplanning.take_picture_to_init(margeObs=10, cam_capture=0)
 
 path = Pathplanning.find_path([x, y], goal, obsList, plotFlag=True)
 
