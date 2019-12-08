@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
-from objects import *
 import math
 
 colors = ["blue", "red", "pink", "green"]
+
 
 def capture_image_from_webcam(webcam_number):
     cap = cv2.VideoCapture(webcam_number, cv2.CAP_DSHOW)
@@ -16,6 +16,7 @@ def capture_image_from_webcam(webcam_number):
         frame_proj = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32 and frame_proj is not None:
+            print("space pressed")
             frame_proj = resize_img(frame_proj, 1.5)
             cap.release()
             cv2.destroyAllWindows()
@@ -24,9 +25,9 @@ def capture_image_from_webcam(webcam_number):
         if frame_proj is not None:
             frame_proj = resize_img(frame_proj, 1.5)
             vision_img = frame_proj.copy()
-            thymio = detect_thymio(vision_img)
-            if thymio:
-                draw_thymio(vision_img, thymio)
+            thymio_param = detect_thymio(vision_img)
+            if thymio_param is not None:
+                draw_thymio(vision_img, thymio_param)
             goal_pos = detect_goal(vision_img)
             if goal_pos:
                 draw_goal(vision_img, goal_pos)
@@ -70,18 +71,38 @@ def draw_obstacles(frame, obstacles):
             cv2.circle(frame, pos, 1, (0, 0, i*60), 3)
 
 
-def draw_thymio(frame, thymio):
+def draw_thymio(frame, thymio_param):
     r = 100.0
-    theta = thymio.theta
-    pt1 = [thymio.pos.x, thymio.pos.y]
+    theta = thymio_param[2]
+    pt1 = [thymio_param[0], thymio_param[1]]
     pt2 = [pt1[0]+r*math.cos(theta), pt1[1]+r*math.sin(theta)]
     pt1 = tuple(map(int, pt1))
     pt2 = tuple(map(int, pt2))
-    cv2.arrowedLine(frame, pt1, pt2, (0, 0, 0), 3)
+    cv2.arrowedLine(frame, pt1, pt2, (0, 0, 255), 3)
 
 
 def draw_goal(frame, pos):
     cv2.circle(frame, pos, 1, (0, 0, 0), 3)
+
+
+def calculate_orientation(pos_from, pos_to):
+    v = [pos_to[0]-pos_from[0], pos_to[1]-pos_from[1]]
+    v = v / np.linalg.norm(v)  # normalize the vector
+    e = [1, 0]
+    angle = np.sign(v[1])*np.arccos(np.clip(np.dot(v, e), -1.0, 1.0))
+    return angle
+
+
+def calculate_thymio_param(circles):
+    thymio_param = np.zeros((1, 3))
+    if circles[0, 2] < circles[1, 2]:
+        thymio_param[0, 0:2] = (circles[1, 0:2])
+        thymio_param[0, 2] = calculate_orientation(thymio_param[0, 0:2], circles[0, 0:2])
+    else:
+        thymio_param[0, 0:2] = (circles[0, 0:2])
+        thymio_param[0, 2] = calculate_orientation(thymio_param[0, 0:2], circles[1, 0:2])
+
+    return thymio_param
 
 
 def detect_thymio(frame):
@@ -98,15 +119,14 @@ def detect_thymio(frame):
                 circles[i, 1] = int(M["m01"] / M["m00"])
                 circles[i, 2] = cv2.contourArea(cnt)
             except ZeroDivisionError:
-                return 0
+                return None
             i += 1
-            #  cv2.circle(frame, (cX, cY), 5, (255, 255, 255), -1)
-        thymio = Thymio(circles)
-        return thymio
+        thymio_param = calculate_thymio_param(circles)
+        return thymio_param.squeeze()
 
     else:
         print("thymio not found")
-        return 0
+        return None
 
 
 def detect_goal(frame):
@@ -128,19 +148,14 @@ def detect_goal(frame):
         return 0
 
 
-def detect_circles(frame, color):
-    _, mask = color_detection(frame, color)
-    circles = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, 1.5, 10, param1=50, param2=10, minRadius=0, maxRadius=0)
-    return circles
-
-
 def detect_obstacles(frame):
+    tol_arc = 0.05
     _, mask = color_detection(frame, "green")
     apr_contours = list()
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     for cnt in contours:
-        cnt = cv2.approxPolyDP(cnt, 0.05*cv2.arcLength(cnt, True), True)
+        cnt = cv2.approxPolyDP(cnt, tol_arc*cv2.arcLength(cnt, True), True)
         # cnt = np.flipud(cnt)
         apr_contours.append(cnt)
     return apr_contours
@@ -221,58 +236,4 @@ def map_projection(frame):
     return warped
 
 
-if __name__ == '__main__':
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-    while 1:
-        _, frame = cap.read()
-        #  red = color_detection(frame, 'red')
-        blue, _ = color_detection(frame, 'blue')
-        #  contours = detect_obstacles(frame)
-        # contour = detect_thymio(frame)
-        '''
-        edge = edge_detection(frame)
-        corners = corner_detection(frame)
-        rect = get_map_corners(corners)
-        '''
-        '''
-        if corners is not None:
-               for corner in corners:
-              x, y = rect.ravel()
-             cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
-        '''
-        '''
-        if corners is not None:
-            for i in range(len(rect)):
-                rect_int = np.int0(rect)
-                cv2.circle(frame, (rect_int[i, 0], rect_int[i, 1]), 5, (0, 0, 255), -1)
-        '''
-        # for contour in contours:
-        # if len(contour):
-        #     cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
-        detect_thymio(frame)
-        circles = detect_circles(frame)
-        if circles is not None:
-            detected_circles = np.uint16(np.around(circles))
-            for (x, y, r) in detected_circles[0, :]:
-                cv2.circle(frame, (x, y), r, (0, 0, 0), 3)
-                cv2.circle(frame, (x, y), 2, (0, 255, 255), 3)
-
-        cv2.imshow('frame', frame)
-        # cv2.imshow('red', red)
-        cv2.imshow('blue', blue)
-
-        '''
-        cv2.imshow('edge', edge)
-        if rect.shape[0]==4:
-            warped = map_projection(frame, rect)
-            cv2.imshow('warped', warped)
-        '''
-
-
-        k = cv2.waitKey(5) & 0xFF
-        if k == 27:
-            break
-
-    cv2.destroyAllWindows()
-    cap.release()
 

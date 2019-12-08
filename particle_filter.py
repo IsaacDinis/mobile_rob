@@ -257,7 +257,7 @@ class MonteCarlo:
         # self.estimated_particle = mean
         # return mean[0], mean[1], mean[2], 42
 
-    def plot_state(self, base_filename=None, gt=np.array([-1, -1, -1]),
+    def plot_state(self, base_filename=None, odom=np.array([-1, -1, -1]),
                    map_back=None, num_particles=-1, sens=None, path=None):
         """ Write particles to an image """
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
@@ -283,8 +283,8 @@ class MonteCarlo:
                 x, y, theta = self.particles[i, :]
                 ax.arrow(x, y, np.cos(theta), np.sin(theta), head_width=0.8, head_length=1, fc='k', ec='k', alpha=0.3)
 
-        if gt[0] != -1 and gt[1] != -1:
-            ax.arrow(gt[0], gt[1], np.cos(gt[2]) * 2, np.sin(gt[2]) * 2, head_width=1, head_length=1.2, fc='green',
+        if odom[0] != -1 and odom[1] != -1:
+            ax.arrow(odom[0], odom[1], np.cos(odom[2]) * 2, np.sin(odom[2]) * 2, head_width=1, head_length=1.2, fc='green',
                      ec='green')
 
         ax.arrow(x, y, np.cos(theta) * 2, np.sin(theta) * 2, head_width=1, head_length=1.2, fc='blue', ec='blue')

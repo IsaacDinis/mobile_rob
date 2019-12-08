@@ -7,7 +7,7 @@ def nothing(x):
     pass
 
 
-use_image = False
+use_image = True
 
 
 open('data\\color_calibration.txt', 'w+').close()  # clear file
@@ -17,7 +17,7 @@ i = 0
 if use_image:
     frame = cv2.imread("map_test/map_test.PNG")
 else:
-    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  # CHANGE CAM NUMBER HERE
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # CHANGE CAM NUMBER HERE
     while True:
         _, frame = cap.read()
         image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,

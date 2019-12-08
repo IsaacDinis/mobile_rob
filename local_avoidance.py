@@ -2,10 +2,13 @@ from control import *
 # from Thymio_custom import Thymio
 import numpy as np
 from time import sleep
+# import main
 
 
-def check_obstacle(thymio):
-    threshold = 2500
+def check_obstacle(thymio, glob_ctrl):
+    # global main.glob_ctrl
+    print(glob_ctrl.state)
+    threshold = 2200
     try:
         thymio["prox.horizontal"]
     except KeyError:
@@ -21,8 +24,9 @@ def check_obstacle(thymio):
         thymio.local_nav_dir = "obs_left"
     elif thymio["prox.horizontal"][4] > threshold or thymio["prox.horizontal"][3] > threshold:
         thymio.local_nav_dir = "obs_right"
-    elif thymio["prox.horizontal"][2] > threshold:
-        turn_angle(thymio, np.pi/4.)
+    elif thymio["prox.horizontal"][2] > 1.5 * threshold:  # last chance, we don't want this to happen
+        turn_angle(thymio, -np.pi/4.)  # choose a side to go around the obstacle --> totally arbitrary
+        print("Obstacle seen only from the center sensor!")
     else:
         thymio.local_nav_dir = "none"
 
@@ -62,7 +66,7 @@ def local_avoidance(thymio):
 
     elif state[0] == 2:
         if state[1] == 0:
-            move_distance(thymio, 10)
+            move_distance(thymio, 7)  # go parallel to the obstacle
             thymio.local_nav_state = [2, 1]
             # print("state 2.0 done")
             return
@@ -78,7 +82,7 @@ def local_avoidance(thymio):
             prox = thymio["prox.horizontal"][0:5]
             if max(prox) == 0:  # something detected by the Thymio?
                 thymio.local_nav_state = [3, 0]
-                move_distance(thymio, 10)
+                move_distance(thymio, 15)  # move past the obstacle
                 return
             elif direction == "obs_left":
                 turn_angle(thymio, -np.pi/2)
