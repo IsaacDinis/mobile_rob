@@ -22,7 +22,7 @@ class GlobalController:
     MOV_ANGLE = 1
     MOV_STRAIGHT = 2
 
-    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10, cornerCut=2, noTurningDistance=6):
+    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10, cornerCut=2, noTurningDistance=6, addedOutOfTubeAvancementTarget= 8):
         self.tubeTol = tubeTol
         self.outOfTubeAvancementTarget = outOfTubeAvancementTarget
         self.angleInTubeTol = angleInTubeTol
@@ -33,6 +33,8 @@ class GlobalController:
         self.noTurningDistance=noTurningDistance
         self.thymioPos=[0,0]
         self.thymioTh=0
+        self.wasLocal=False
+        self.addedOutOfTubeAvancementTarget=addedOutOfTubeAvancementTarget
 
     @staticmethod
     def remap(x, in_min, in_max, out_min, out_max, constrain=True):
@@ -145,6 +147,7 @@ class GlobalController:
         self.currentTargetID shall be set to 1 in the beginning"""
         self.thymioPos = thymioPos # saving the val for futur
         self.thymioTh = thymioTh # saving the val for futur
+
         # global navType
         if navType == "global":
             nextW = self.path[self.currentTargetID]
@@ -184,18 +187,17 @@ class GlobalController:
             print("NavType: " + navType + " // self.state: " + self.state + " // pos : " + str(thymioPos))
 
             if self.state == "straightInTube":
-                # move_distance(thymio, np.linalg.norm(nextW-lastW))
                 thymio.set_var("motor.right.target", 80)
                 thymio.set_var("motor.left.target", 80)
                 self.state = "start"
-                # thymioPos += np.array([np.cos(thymioTh), np.sin(thymioTh)]) * 0.8  # fake odometry
+
 
             elif self.state == "turnInTube":
                 epsTh = GlobalController.compute_eps(thymioPos, nextW, thymioTh)
                 turn_angle(thymio, epsTh)
                 print("turning in tube " + str(epsTh))
                 self.state = "wait"
-                # thymioTh += epsTh  # fake odometry
+
 
             elif self.state == "wait":
                 if thymio["event.args"][12] == GlobalController.NO_ACTION:
@@ -203,32 +205,30 @@ class GlobalController:
                     self.state = "start"
 
             elif self.state == "turnOutTube":
-                intermWaypoint = GlobalController.compute_interm_waypoint(lastW, nextW, thymioPos, self.outOfTubeAvancementTarget)
+
+                intermWaypoint = GlobalController.compute_interm_waypoint(lastW, nextW, thymioPos,
+                                                                          self.outOfTubeAvancementTarget + self.wasLocal*self.addedOutOfTubeAvancementTarget )
+                self.wasLocal=False
                 epsTh = GlobalController.compute_eps(thymioPos, intermWaypoint, thymioTh)
                 disToTravel = np.linalg.norm(thymioPos - intermWaypoint)
                 turn_angle_move_distance(thymio, epsTh, disToTravel)
                 self.state = "wait"
-                # thymioTh += epsTh  # fake odometry
-                # thymioPos = intermWaypoint  # fake odometry
 
             elif self.state == "reachedGoal":
                 print("the waypoint we reached was the goal ! ")
 
             else:
                 print("error, self.state unknown")
-        else:  # currently switched to local nav
+        else:  # currently switched to local navigation
             self.state = "start"  # so we are in the correct self.state when we come back to globalNav
+            self.wasLocal=True
             print("NavType: " + navType)
-
-        # fake odom
-        # return thymioTh, thymioPos
 
 
 
 if __name__ == "__main__":
 # %%
     thymio = Thymio.serial(port="COM18", refreshing_rate=0.1)
-
     ok = False
     yy, zz = [], []
     while not ok or len(zz) == 0:
@@ -246,6 +246,6 @@ if __name__ == "__main__":
     globalcontroller= GlobalController([np.array([1, 1]), np.array([10, 10]), np.array([15, 5])] )
     while 1:
         time.sleep(1) #fake lag for future particule filter
-        thymioTh = np.pi  # TODO Loic : mettre la valeur d'angle du thymio ici
-        thymioPos = np.array([2, 6])  # TODO Loic : mettre la position du thymio ici
+        thymioTh = np.pi
+        thymioPos = np.array([2, 6])
         globalcontroller.followPath(thymioTh, thymioPos, thymio)
