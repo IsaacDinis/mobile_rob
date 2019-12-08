@@ -6,9 +6,9 @@ from shapely.ops import cascaded_union
 
 import vision
 import cv2
+
 class Obstacle:
     def __init__(self, vertexList, margeObs):
-
         self.vertex=vertexList
         self.polygone= Polygon(vertexList)
         self.polygoneExpanded = self.polygone.buffer(margeObs, resolution=2)
@@ -18,24 +18,7 @@ class Obstacle:
 
     def computeExpandedVertices(self):
         coordList= list(zip( self.polygoneExpanded.exterior.coords.xy[0], self.polygoneExpanded.exterior.coords.xy[1]))
-        self.vertexExpanded = coordList[:-1]  # delete last elem to avoid re-looping
-
-        # self.vertexExpanded=[]
-        # #centerOfMass
-        # tot=[0,0]
-        # for point in self.vertex:
-        #     tot[0]+= point[0]
-        #     tot[1]+= point[1]
-        # N= len(vertexList)
-        # centerOfMass= [0,0]
-        # centerOfMass= np.array([ tot[0],  tot[1]] )/N
-        #
-        # for point in self.vertex:
-        #     v=np.array([point[0], point[1]])-centerOfMass
-        #     v=v/float(np.linalg.norm(v))*margeObs
-        #     pointArr= np.array([point[0], point[1]])
-        #     pointArr= pointArr + v
-        #     self.vertexExpanded.append( (pointArr[0], pointArr[1]))
+        self.vertexExpanded = coordList[:-1] #delete last vertice to avoid re-looping
 
 MAP_MAX_X_AXIS= 81
 MAP_MAX_Y_AXIS= 114
@@ -49,9 +32,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     # cv2.imshow("proj", img)
     pix_to_unit_x = 27*3/img.shape[1]
     pix_to_unit_y = 38*3/img.shape[0]
-    thymioPos = vision.detect_thymio(img)
-    if thymioPos:
-        thymioCoord = [thymioPos.pos.x*pix_to_unit_x, thymioPos.pos.y*pix_to_unit_y]
+    thymioCoord = vision.detect_thymio(img)
 
     goal = vision.detect_goal(img)
     goal = (goal[0]*pix_to_unit_x, goal[1]*pix_to_unit_y)
@@ -71,13 +52,31 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
         for j in range(i+1, len(obsList) ):
             if obsList[i].expandEnabled and obsList[j].expandEnabled and obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
 
-                obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded ])
+                obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded])
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
-    return thymioCoord[0], thymioCoord[1], thymioPos.theta, goal, obsList
+    return thymioCoord[0]*pix_to_unit_x, thymioCoord[1]*pix_to_unit_y, thymioCoord[2], goal, obsList
 
 
 def find_path(thymioCoord, goal, obsList, plotFlag=True):
+    MARGE_BORD=5
+    EXTREME_DIST=400
+    for iObs in range(0, len(obsList)):
+        for iVert in range(0, len(obsList[iObs].vertexExpanded)):
+            listV=list(obsList[iObs].vertexExpanded[iVert])
+            if listV[0]>MAP_MAX_X_AXIS-MARGE_BORD:
+                listV[0] = EXTREME_DIST
+                obsList[iObs].vertexExpanded[iVert]=listV
+            if listV[0]<0+MARGE_BORD:
+                listV[0] = -EXTREME_DIST
+                obsList[iObs].vertexExpanded[iVert]=listV
+            if listV[1]>MAP_MAX_Y_AXIS-MARGE_BORD:
+                listV[1]= EXTREME_DIST
+                obsList[iObs].vertexExpanded[iVert] = listV
+            if listV[1]<0+MARGE_BORD:
+                listV[1]= -EXTREME_DIST
+                obsList[iObs].vertexExpanded[iVert] = listV
+
     if plotFlag:
         for obs in obsList:
             unzippedList = list(zip(*obs.vertex))
@@ -113,11 +112,16 @@ def find_path(thymioCoord, goal, obsList, plotFlag=True):
         plt.plot(unzippedPath[0], unzippedPath[1], '--', color='black')
         plt.xlim(0, MAP_MAX_X_AXIS)
         plt.ylim(0, MAP_MAX_Y_AXIS)
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
     return path
 
 
 if __name__ == "__main__":
-   [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
-   find_path(thymioCoord, thymioTh, goal, obsList, plotFlag=1)
-   print("")
+   # [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
+   dx=-55
+   thymioCoord=[1, 20]
+   goal = [1, 50]
+   obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
+   find_path(thymioCoord, goal, [obs1], plotFlag=True)
+
