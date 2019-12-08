@@ -1,3 +1,6 @@
+""" file used to calibrate the color detection using trackbars. Saves the calibration in a txt file.
+If using a webcam the user should first capture the image by pressing the space bar.
+When the calibration is done for a color, pressing the space bar skips the to next one"""
 import cv2
 import numpy as np
 import sys
@@ -7,16 +10,17 @@ def nothing(x):
     pass
 
 
-use_image = True
+use_image = True  # change here if using webcam
 
 
 open('data\\color_calibration.txt', 'w+').close()  # clear file
 colors = ["blue", "red", "pink", "green"]
-i = 0
+
+i = 0  # counter
 
 if use_image:
     frame = cv2.imread("map_test/map_test.PNG")
-else:
+else:  # capture image
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # CHANGE CAM NUMBER HERE
     while True:
         _, frame = cap.read()
@@ -32,6 +36,7 @@ else:
             cv2.destroyAllWindows()
             break
 
+# creates the trackbars
 cv2.namedWindow("Trackbars")
 cv2.createTrackbar("L - H", "Trackbars", 0, 179, nothing)
 cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)
@@ -45,6 +50,7 @@ print(text)
 
 while True:
 
+    # gets the trackbars values
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     l_h = cv2.getTrackbarPos("L - H", "Trackbars")
     l_s = cv2.getTrackbarPos("L - S", "Trackbars")
@@ -52,6 +58,8 @@ while True:
     u_h = cv2.getTrackbarPos("U - H", "Trackbars")
     u_s = cv2.getTrackbarPos("U - S", "Trackbars")
     u_v = cv2.getTrackbarPos("U - V", "Trackbars")
+
+    # applies the filter
     lower_color = np.array([l_h, l_s, l_v])
     upper_color = np.array([u_h, u_s, u_v])
     mask = cv2.inRange(hsv, lower_color, upper_color)
@@ -67,7 +75,7 @@ while True:
 
     if key == 32:  # space pressed
         i += 1
-        with open("data\\color_calibration.txt", "a") as text_file:
+        with open("data\\color_calibration.txt", "a") as text_file:  # saves color calibration
             print(f"{l_h} {l_s} {l_v} {u_h} {u_s} {u_v}", file=text_file)
             cv2.setTrackbarPos("L - H", "Trackbars", 0)
             cv2.setTrackbarPos("L - S", "Trackbars", 0)
