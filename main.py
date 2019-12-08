@@ -43,7 +43,10 @@ ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 # path = [np.array([x, y]), np.array([45, 45]), np.array([10, 60]), np.array([40, 20])]  # fake path
 # read_reset_times = []
 
-path, x, y, theta = Pathplanning.take_picture_to_init(margeObs=9, plotFlag=True, cam_capture=2)
+x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=8.5, cam_capture=2)
+
+path = Pathplanning.find_path([x, y], goal, obsList, plotFlag=True)
+
 path = [np.array(tup) for tup in path]
 glob_ctrl = global_controller.GlobalController(path, tubeTol=4, outOfTubeAvancementTarget=3, noTurningDistance=3 )
 
@@ -105,9 +108,9 @@ while glob_ctrl.state is not "reachedGoal":  # i < 30
     glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
     if glob_ctrl.state == "straightInTube":
         thymio.set_var_array("leds.top", [0, 255, 0])  # green
-    elif thymio.state == "local":
+    elif thymio.nav_flag == "local":
         thymio.set_var_array("leds.top", [255, 255, 0])  # yellow
-    elif thymio.state == "global":
+    elif thymio.nav_flag == "global":
         thymio.set_var_array("leds.top", [0, 0, 255])  # blue
 
     if thymio.nav_flag == "local":

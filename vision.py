@@ -11,16 +11,28 @@ def capture_image_from_webcam(webcam_number):
         _, frame = cap.read()
         image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
                             0.5, (255, 255, 255), 1, cv2.LINE_AA)
-        cv2.imshow("Display window", frame)
+        cv2.imshow("webcam frame", frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32:
             cap.release()
             cv2.destroyAllWindows()
             break
-    # frame = cv2.flip(frame, 0)
-    frame = cv2.transpose(frame)
-    frame = map_projection(frame)
-    frame = resize_img(frame, 1.5)
+
+        frame = cv2.transpose(frame)
+        frame = map_projection(frame)
+        if frame is not None:
+            frame = resize_img(frame, 1.5)
+            vision_img = frame.copy()
+            thymio = detect_thymio(vision_img)
+            if thymio:
+                draw_thymio(vision_img, thymio)
+            goal_pos = detect_goal(vision_img)
+            if goal_pos:
+                draw_goal(vision_img, goal_pos)
+            obstacles = detect_obstacles(vision_img)
+            draw_obstacles(vision_img, obstacles)
+            cv2.imshow("vision frame", vision_img)
+
     return frame
 
 
@@ -147,15 +159,18 @@ def detect_corners(frame, color):
             pos = list()
             cnt = contours[i]
             M = cv2.moments(cnt)
-            pos.append(int(M["m10"] / M["m00"]))
-            pos.append(int(M["m01"] / M["m00"]))
+            try:
+                pos.append(int(M["m10"] / M["m00"]))
+                pos.append(int(M["m01"] / M["m00"]))
+            except ZeroDivisionError:
+                return None
             corners.append(pos)
         corners = np.asarray(corners)
         return corners
 
     else:
         print("corners not found")
-        return 0
+        return None
 
 
 
@@ -175,6 +190,8 @@ def get_map_corners(corners):
 def map_projection(frame):
 
     corners = detect_corners(frame, "blue")
+    if corners is None:
+        return None
     rect = get_map_corners(corners)
 
     (tl, tr, br, bl) = rect
