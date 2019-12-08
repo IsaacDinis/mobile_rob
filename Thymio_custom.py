@@ -354,11 +354,15 @@ class Thymio:
     """Connection to a Thymio.
     """
 
-    def __init__(self, io, node_id=1, refreshing_rate=None):
+    def __init__(self, io, node_id=1, refreshing_rate=None, global_controller=None):
         self.deltas_and_time = []  # debug
         self.start_t = 0.
         self.delta_x, self.delta_y, self.delta_th = 0., 0., 0.
         self.past_dl, self.past_dr = 0., 0.
+        self.nav_flag = "global"
+        self.local_nav_state = [0, 0]
+        self.local_nav_dir = "none"
+        self.glob_contr = global_controller
 
         self.terminating = False
         self.io = io
@@ -375,11 +379,8 @@ class Thymio:
         self.refreshing_timeout = None
         self.refreshing_trigger = threading.Event()  # initially wait() blocks
         self.reset_odom = False
-        self.nav_flag = "global"
-        self.local_nav_state = [0, 0]
-        self.local_nav_dir = "none"
 
-        def do_refresh():  ############################################################# IT IS HERE
+        def do_refresh():  # ############################################################ REFRESH IS HERE
             while not self.terminating:
                 self.refreshing_trigger.wait(self.refreshing_timeout)
                 self.refreshing_trigger.clear()
@@ -387,7 +388,7 @@ class Thymio:
 
                 self.increment_odometry()
                 if self.nav_flag == "global":
-                    check_obstacle(self)  # modifies self.local_nav_dir
+                    check_obstacle(self, self.glob_contr)  # modifies self.local_nav_dir
 
                 if self.local_nav_dir != "none":
                     if self.nav_flag == "global":
@@ -479,13 +480,13 @@ class Thymio:
             return "COM8"
 
     @staticmethod
-    def serial(port=None, node_id=1, refreshing_rate=None):
+    def serial(port=None, node_id=1, refreshing_rate=None, global_controller=None):
         """Create Thymio object with a serial connection.
         """
         import serial  # pip3 install pyserial
         if port is None:
             port = Thymio.serial_default_port()
-        th = Thymio(serial.Serial(port), node_id, refreshing_rate)
+        th = Thymio(serial.Serial(port), node_id, refreshing_rate, global_controller=global_controller)
         th.handshake()
         return th
 

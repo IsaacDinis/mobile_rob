@@ -16,6 +16,7 @@ def capture_image_from_webcam(webcam_number):
         frame_proj = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32 and frame_proj is not None:
+            print("space pressed")
             frame_proj = resize_img(frame_proj, 1.5)
             cap.release()
             cv2.destroyAllWindows()
@@ -135,12 +136,13 @@ def detect_circles(frame, color):
 
 
 def detect_obstacles(frame):
+    tol_arc = 0.05
     _, mask = color_detection(frame, "green")
     apr_contours = list()
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     for cnt in contours:
-        cnt = cv2.approxPolyDP(cnt, 0.05*cv2.arcLength(cnt, True), True)
+        cnt = cv2.approxPolyDP(cnt, tol_arc*cv2.arcLength(cnt, True), True)
         # cnt = np.flipud(cnt)
         apr_contours.append(cnt)
     return apr_contours

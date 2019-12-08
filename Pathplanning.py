@@ -14,9 +14,11 @@ class Obstacle:
         self.polygoneExpanded = self.polygone.buffer(margeObs, resolution=2)
         self.expandEnabled=True
         self.computeExpandedVertices()
+
+
     def computeExpandedVertices(self):
         coordList= list(zip( self.polygoneExpanded.exterior.coords.xy[0], self.polygoneExpanded.exterior.coords.xy[1]))
-        self.vertexExpanded = coordList[:-1] #delete last elem to avoid re-looping
+        self.vertexExpanded = coordList[:-1]  # delete last elem to avoid re-looping
 
         # self.vertexExpanded=[]
         # #centerOfMass
@@ -41,7 +43,6 @@ MAP_MAX_Y_AXIS= 114
 def take_picture_to_init(margeObs=5, cam_capture=2):
     """will return path, thymio pos and thymio theta"""
 
-
     # img = cv2.imread("map_test\\map_test_more_complicated.png")
     # img = cv2.flip(img, 0)
     img = vision.capture_image_from_webcam(cam_capture)
@@ -62,7 +63,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
         obst_vis[:, :, 0] *= pix_to_unit_x
         obst_vis[:, :, 1] *= pix_to_unit_y
         vertex_vision = np.ndarray.tolist(obst_vis.squeeze())
-        obsList.append(Obstacle(vertex_vision, margeObs))#converting obstacle to conrrect format
+        obsList.append(Obstacle(vertex_vision, margeObs))  # converting obstacle to correct format
 
 
     # Merge
@@ -74,6 +75,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
     return thymioCoord[0], thymioCoord[1], thymioPos.theta, goal, obsList
+
 
 def find_path(thymioCoord, goal, obsList, plotFlag=True):
     if plotFlag:

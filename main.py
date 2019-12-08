@@ -25,8 +25,6 @@ def read_odometry(thymio):
 map_file = 'data\\mapA0.png'
 save_dir = "output\\particles_"
 
-# connect to the Thymio
-thymio = Thymio_custom.Thymio.serial(port="COM14", refreshing_rate=0.1)
 
 config_filename = 'data\\config_TP465.json'
 with open(config_filename) as infile:
@@ -49,6 +47,10 @@ path = Pathplanning.find_path([x, y], goal, obsList, plotFlag=True)
 
 path = [np.array(tup) for tup in path]
 glob_ctrl = global_controller.GlobalController(path, tubeTol=4, outOfTubeAvancementTarget=3, noTurningDistance=3 )
+
+# connect to the Thymio
+thymio = Thymio_custom.Thymio.serial(port="COM10", refreshing_rate=0.1, global_controller=glob_ctrl)
+
 
 # setting up all the parameters
 loc = MonteCarlo(ground_map_left, ground_map_right, particles_count=150000, sigma_obs=150., prop_uniform=0,
@@ -102,15 +104,15 @@ while glob_ctrl.state is not "reachedGoal":  # i < 30
         d_reck[2] += dth
 
         loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
-                       num_particles=50, gt=d_reck, sens=[sensor_left, sensor_right], path=path)
+                       num_particles=50, odom=d_reck, sens=[sensor_left, sensor_right], path=path)
     print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
     glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
-    if glob_ctrl.state == "straightInTube":
-        thymio.set_var_array("leds.top", [0, 255, 0])  # green
-    elif thymio.nav_flag == "local":
+    if thymio.nav_flag == "local":
         thymio.set_var_array("leds.top", [255, 255, 0])  # yellow
-    elif thymio.nav_flag == "global":
+    elif glob_ctrl.state == "start":  # everything is going well
+        thymio.set_var_array("leds.top", [0, 255, 0])  # green
+    elif thymio.nav_flag == "global":  # coming back to the planned path
         thymio.set_var_array("leds.top", [0, 0, 255])  # blue
 
     if thymio.nav_flag == "local":

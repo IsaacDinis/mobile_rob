@@ -8,7 +8,7 @@ import os
 import sys
 import time
 import serial
-from Thymio_custom import Thymio
+# from Thymio_custom import Thymio
 import numpy as np
 
 from control import *
