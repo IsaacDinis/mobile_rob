@@ -31,7 +31,7 @@ class GlobalController:
         self.path = path
         self.cornerCut=cornerCut
         self.noTurningDistance=noTurningDistance
-        self.thymioPos=0
+        self.thymioPos=[0,0]
         self.thymioTh=0
 
     @staticmethod
