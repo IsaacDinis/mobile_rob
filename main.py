@@ -103,8 +103,8 @@ try:
         time.sleep(0.2)  # slow down the loop
 
     thymio.set_var_array("leds.top", [255, 0, 127])  # pink when loop is exited normally --> goal reached
-except:  # Odometry: 0.00 0.00 0.00
-
+except:
+    thymio.set_var_array("leds.top", [255, 0, 0])  # red
     pass
 
 control.stop_thymio(thymio)
