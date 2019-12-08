@@ -391,8 +391,10 @@ class Thymio:
 
                 self.increment_odometry()
                 if self.nav_flag == "global":
-                    loc_av.check_obstacle(self, self.glob_contr)  # modifies self.local_nav_dir
-
+                    if self.glob_contr.isAllowedToSwitchToLocal():
+                        loc_av.check_obstacle(self)  # modifies self.local_nav_dir
+                    else:
+                        self.local_nav_dir="none"
                 if self.local_nav_dir != "none":
                     if self.nav_flag == "global":
                         ctrl.stop_thymio(self)

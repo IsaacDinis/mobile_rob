@@ -9,6 +9,8 @@ from numba import jit
 import utils as ut
 
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 
@@ -43,6 +45,8 @@ class MonteCarlo:
         self.particles = particles
         self.weights = np.zeros(particles_count)
         self.estimated_particle = np.zeros_like(particles[0, :], dtype=float)
+
+        self.fig = None
 
     def apply_obs_and_resample(self, left_color, right_color):
         """ Apply observation (values measured on the map) in updating probability weights of each particle,
@@ -263,9 +267,17 @@ class MonteCarlo:
                    map_back=None, num_particles=-1, sens=None, path=None):
         """ Write particles to an image """
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
-        fig = Figure((3, 3), tight_layout=True)
-        canvas = FigureCanvas(fig)
-        ax = fig.gca()
+
+        if base_filename is not None:
+            if self.fig is None:
+                self.fig = Figure((3, 3), tight_layout=True)
+            canvas = FigureCanvas(self.fig)
+        else:
+            if self.fig is None:
+                self.fig = plt.figure()
+            else:
+                self.fig.clear()
+        ax = self.fig.gca()
         ax.set_xlim([0, self.ground_map_left.shape[0]])
         ax.set_ylim([0, self.ground_map_left.shape[1]])
         x, y, theta = self.estimated_particle
@@ -275,7 +287,6 @@ class MonteCarlo:
 
         if path is not None:
             p = np.array(path)
-            self.p = p
             ax.plot(p[0,0], p[0,1], 'rx', markersize=3)
             ax.plot(p[1:,0], p[1:,1], 'bx', markersize=3)
 
@@ -315,5 +326,5 @@ class MonteCarlo:
         if base_filename is not None:
             canvas.print_figure(base_filename + '.png', dpi=300)
         else:
-            # ax.imshow()
-            fig.show()
+            # ax.show()
+            self.fig.show()

@@ -28,7 +28,7 @@ ground_map_left = vUnitToSensor(np.transpose(ground_map), config['left'])
 ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 
 # taking a picture to init the position of all the elements
-x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=8.5, cam_capture=0)
+x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=10, cam_capture=0)
 
 path = Pathplanning.find_path([x, y], goal, obsList, plotFlag=True)
 
@@ -48,7 +48,7 @@ for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
 # plot the inital state
-loc.plot_state(base_filename=save_dir+str(0), map_back=ground_map, num_particles=50, path=path)
+loc.plot_state( map_back=ground_map, num_particles=50) #, path=path)  # base_filename=save_dir+str(0)
 
 Thymio_custom.wait_init(thymio)
 Thymio_custom.reset_thymio(thymio)
@@ -85,16 +85,15 @@ try:
 
         # plotting
         plot_time = time.time()  # yes it takes time !
-        loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
-                       num_particles=50, odom=d_reck, sens=[sensor_left, sensor_right], path=path)
+        loc.plot_state(map_back=ground_map, num_particles=50, odom=d_reck,
+                       sens=[sensor_left, sensor_right], path=path)  # base_filename=save_dir+str(i),
         print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
         glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
-        if thymio.nav_flag == "local":
-            local_avoidance(thymio)
 
         if thymio.nav_flag == "local":
             thymio.set_var_array("leds.top", [255, 255, 0])  # yellow
+            local_avoidance(thymio)
         elif glob_ctrl.state == "start":  # everything is going well
             thymio.set_var_array("leds.top", [0, 255, 0])  # green
         elif thymio.nav_flag == "global":  # coming back to the planned path
