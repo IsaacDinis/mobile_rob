@@ -5,9 +5,9 @@ from time import sleep
 # import main
 
 
-def check_obstacle(thymio, glob_ctrl):
+def check_obstacle(thymio):
     # global main.glob_ctrl
-    print(glob_ctrl.state)
+
     threshold = 2200
     try:
         thymio["prox.horizontal"]
