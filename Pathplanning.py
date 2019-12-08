@@ -15,7 +15,6 @@ class Obstacle:
         self.expandEnabled=True
         self.computeExpandedVertices()
 
-
     def computeExpandedVertices(self):
         coordList= list(zip( self.polygoneExpanded.exterior.coords.xy[0], self.polygoneExpanded.exterior.coords.xy[1]))
         self.vertexExpanded = coordList[:-1] #delete last vertice to avoid re-looping
@@ -23,14 +22,23 @@ class Obstacle:
 MAP_MAX_X_AXIS= 81
 MAP_MAX_Y_AXIS= 114
 
-
 def take_picture_to_init(margeObs=5, cam_capture=2):
-    """will return path, thymio pos and angle"""
+    """
+    will take a picture from webcam and recognise the different element of the map,
+    will return the different obstacle as polygons (already expanded to void thymio colision,
+    Polygons are here described as set of vertices in clockwise order
 
-    # img = cv2.imread("map_test\\map_test_more_complicated.png")
-    # img = cv2.flip(img, 0)
+    librairie used for polygon manipulation: Shapely
+    https://shapely.readthedocs.io/en/stable/manual.html
+
+    Tutorial to merge 2 polygons:
+    https://deparkes.co.uk/2015/02/28/how-to-merge-polygons-in-python/
+
+    """
+
+
     img = vision.capture_image_from_webcam(cam_capture)
-    # cv2.imshow("proj", img)
+
     pix_to_unit_x = 27*3/img.shape[1]
     pix_to_unit_y = 38*3/img.shape[0]
     thymioCoord = vision.detect_thymio(img)
@@ -47,13 +55,11 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
         vertex_vision = np.ndarray.tolist(obst_vis.squeeze())
         obsList.append(Obstacle(vertex_vision, margeObs))  # converting obstacle to correct format
 
-    # Merge
+    # Merging the coliding obstacle
     for i in range(0, len(obsList)):
         for j in range(0, len(obsList) ):
-
             if i!=j and obsList[i].expandEnabled and obsList[j].expandEnabled and \
                     obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
-
                 obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded])
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
@@ -62,8 +68,14 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
 
 
 def find_path(thymioCoord, goal, obsList, plotFlag=True):
+    """Given an inital position, a goal and a set of obstacle, will create a visibility Graph of the map,
+    then perform an A* search on the given graph, and return the shortest path
+    Librairy used for visiblity grpah generation and grpah search:https://github.com/MrMinimal64/extremitypathfinder
+    """
+
     MARGE_BORD=5
     EXTREME_DIST=400
+    #if obstacle are near the map border, make them bigger so we are surefound path dosn't go trough the small gap
     for iObs in range(0, len(obsList)):
         for iVert in range(0, len(obsList[iObs].vertexExpanded)):
             listV=list(obsList[iObs].vertexExpanded[iVert])
@@ -98,10 +110,10 @@ def find_path(thymioCoord, goal, obsList, plotFlag=True):
 
 
     map = Environment()
-    # anti clockwise vertex numbering!
+    #boundary of the map, anti clockwise vertex numbering!
     boundary_coordinates = [(0.0, 0.0), (MAP_MAX_X_AXIS, 0.0), (MAP_MAX_X_AXIS, MAP_MAX_Y_AXIS), (0.0, MAP_MAX_Y_AXIS)]
 
-    # clockwise numbering!
+
     list_of_obstacle = []
     for obs in obsList:
         if obs.expandEnabled:
