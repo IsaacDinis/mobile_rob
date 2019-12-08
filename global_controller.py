@@ -112,6 +112,8 @@ class GlobalController:
     def isAllowedToSwitchToLocal(self):
         nextW = self.path[self.currentTargetID]
         lastW = self.path[self.currentTargetID - 1]
+        if self.thymioPos[0]==0 and self.thymioPos[1]==0: # for initialisation
+            return True
         if GlobalController.is_inside_tube(lastW, nextW, self.thymioPos,self.tubeTol):
             return "True in tube"
         else: #outOfTube
@@ -147,6 +149,9 @@ class GlobalController:
         if navType == "global":
             nextW = self.path[self.currentTargetID]
             lastW = self.path[self.currentTargetID - 1]
+            if self.currentTargetID == len(self.path) - 1:
+                self.cornerCut = 8 # for the final goal
+
             if GlobalController.has_reached_nextW(lastW, nextW, thymioPos, self.cornerCut):
                 print("We reached a waypoint")
                 thymio.set_var("motor.right.target", 0)

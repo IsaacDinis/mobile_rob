@@ -49,13 +49,15 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
 
     # Merge
     for i in range(0, len(obsList)):
-        for j in range(i+1, len(obsList) ):
-            if obsList[i].expandEnabled and obsList[j].expandEnabled and \
+        for j in range(0, len(obsList) ):
+
+            if i!=j and obsList[i].expandEnabled and obsList[j].expandEnabled and \
                     obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
 
                 obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded])
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
+
     return thymioCoord[0]*pix_to_unit_x, thymioCoord[1]*pix_to_unit_y, thymioCoord[2], goal, obsList
 
 
