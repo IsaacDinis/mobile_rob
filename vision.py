@@ -9,17 +9,17 @@ def capture_image_from_webcam(webcam_number):
     cap = cv2.VideoCapture(webcam_number, cv2.CAP_DSHOW)
     while True:
         _, frame = cap.read()
-        image = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, (255, 255, 255), 1, cv2.LINE_AA)
-        cv2.imshow("webcam frame", frame)
+        display_frame = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (0, 0, 0), 1, cv2.LINE_AA)
+        cv2.imshow("webcam frame", display_frame)
+        frame = cv2.transpose(frame)
+        frame = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32:
             cap.release()
             cv2.destroyAllWindows()
             break
 
-        frame = cv2.transpose(frame)
-        frame = map_projection(frame)
         if frame is not None:
             frame = resize_img(frame, 1.5)
             vision_img = frame.copy()
