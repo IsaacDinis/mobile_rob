@@ -105,6 +105,14 @@ class GlobalController:
         proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
         return (proj+cornerCut)>np.linalg.norm(nextW-prevW)
 
+    def allowedToSwitchToLocal(self, thymioPos, thymioTh, thymio, navType):
+        nextW = self.path[self.currentTargetID]
+        lastW = self.path[self.currentTargetID - 1]
+
+
+
+
+
     def followPath(self, thymioPos, thymioTh, thymio, navType):  # ATTENTION Changé l'ordre de theta et pos - Loic
         """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including
         starting waypoint.
@@ -183,8 +191,6 @@ class GlobalController:
 
         # fake odom
         # return thymioTh, thymioPos
-
-
 
 
 
