@@ -8,21 +8,21 @@ colors = ["blue", "red", "pink", "green"]
 def capture_image_from_webcam(webcam_number):
     cap = cv2.VideoCapture(webcam_number, cv2.CAP_DSHOW)
     while True:
-        _, frame = cap.read()
-        display_frame = cv2.putText(frame, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, (0, 0, 0), 1, cv2.LINE_AA)
+        _, frame_raw = cap.read()
+        display_frame = cv2.putText(frame_raw, "press space to capture", (15, 15), cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
         cv2.imshow("webcam frame", display_frame)
-        frame = cv2.transpose(frame)
-        frame = map_projection(frame)
+        frame = cv2.transpose(frame_raw)
+        frame_proj = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
-        if k == 32:
+        if k == 32 and frame_proj is not None:
             cap.release()
             cv2.destroyAllWindows()
             break
 
-        if frame is not None:
-            frame = resize_img(frame, 1.5)
-            vision_img = frame.copy()
+        if frame_proj is not None:
+            # frame_proj = resize_img(frame_proj, 1.5)
+            vision_img = frame_proj.copy()
             thymio = detect_thymio(vision_img)
             if thymio:
                 draw_thymio(vision_img, thymio)
@@ -33,7 +33,7 @@ def capture_image_from_webcam(webcam_number):
             draw_obstacles(vision_img, obstacles)
             cv2.imshow("vision frame", vision_img)
 
-    return frame
+    return frame_proj
 
 
 def resize_img(frame, scale_factor):
@@ -92,9 +92,12 @@ def detect_thymio(frame):
         i = 0
         for cnt in contours:
             M = cv2.moments(cnt)
-            circles[i, 0] = int(M["m10"] / M["m00"])
-            circles[i, 1] = int(M["m01"] / M["m00"])
-            circles[i, 2] = cv2.contourArea(cnt)
+            try:
+                circles[i, 0] = int(M["m10"] / M["m00"])
+                circles[i, 1] = int(M["m01"] / M["m00"])
+                circles[i, 2] = cv2.contourArea(cnt)
+            except ZeroDivisionError:
+                return 0
             i += 1
             #  cv2.circle(frame, (cX, cY), 5, (255, 255, 255), -1)
         thymio = Thymio(circles)
@@ -169,7 +172,7 @@ def detect_corners(frame, color):
         return corners
 
     else:
-        print("corners not found")
+        # print("corners not found")
         return None
 
 

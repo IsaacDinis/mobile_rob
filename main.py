@@ -43,7 +43,7 @@ ground_map_right = vUnitToSensor(np.transpose(ground_map), config['right'])
 # path = [np.array([x, y]), np.array([45, 45]), np.array([10, 60]), np.array([40, 20])]  # fake path
 # read_reset_times = []
 
-x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=8.5, cam_capture=2)
+x, y, theta, goal, obsList = Pathplanning.take_picture_to_init(margeObs=8.5, cam_capture=0)
 
 path = Pathplanning.find_path([x, y], goal, obsList, plotFlag=True)
 

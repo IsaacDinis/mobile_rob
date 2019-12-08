@@ -46,8 +46,8 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     # img = cv2.flip(img, 0)
     img = vision.capture_image_from_webcam(cam_capture)
     # cv2.imshow("proj", img)
-    pix_to_unit_x = 27*3/img.shape[0]
-    pix_to_unit_y = 38 * 3 / img.shape[1]
+    pix_to_unit_x = 27*3/img.shape[1]
+    pix_to_unit_y = 38*3/img.shape[0]
     thymioPos = vision.detect_thymio(img)
     if thymioPos:
         thymioCoord = [thymioPos.pos.x*pix_to_unit_x, thymioPos.pos.y*pix_to_unit_y]
