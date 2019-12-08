@@ -68,9 +68,10 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
 
 
 def find_path(thymioCoord, goal, obsList, plotFlag=True):
-    """Given an inital position, a goal and a set of obstacle, will create a visibility Graph of the map,
+    """Given an inital position, a goal and a set of obstacle, will create a Visibility Graph of the map,
     then perform an A* search on the given graph, and return the shortest path
-    Librairy used for visiblity grpah generation and grpah search:https://github.com/MrMinimal64/extremitypathfinder
+    Librairy used for visiblity Graph generation and Graph search:https://github.com/MrMinimal64/extremitypathfinder
+
     """
 
     MARGE_BORD=5
