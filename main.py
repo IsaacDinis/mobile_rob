@@ -95,8 +95,8 @@ try:
 
         # plotting
         plot_time = time.time()  # yes it takes time !
-        loc.plot_state(base_filename=save_dir+str(i), map_back=ground_map,
-                       num_particles=50, odom=d_reck, sens=[sensor_left, sensor_right], path=path)
+        loc.plot_state(map_back=ground_map, num_particles=50, odom=d_reck,
+                       sens=[sensor_left, sensor_right], path=path)  # base_filename=save_dir+str(i),
         print("Duration algo, plot : {} , {} ms".format(round(1000*duration), round(1000 * (time.time() - plot_time))))
 
         glob_ctrl.followPath(est_pos[0:2], est_pos[2], thymio, thymio.nav_flag)
