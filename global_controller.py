@@ -22,7 +22,7 @@ class GlobalController:
     MOV_ANGLE = 1
     MOV_STRAIGHT = 2
 
-    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10, cornerCut=2, noTurningDistance=6):
+    def __init__(self, path, tubeTol = 2, outOfTubeAvancementTarget = 2, angleInTubeTol = 10, cornerCut=2, noTurningDistance=6, addedOutOfTubeAvancementTarget= 8):
         self.tubeTol = tubeTol
         self.outOfTubeAvancementTarget = outOfTubeAvancementTarget
         self.angleInTubeTol = angleInTubeTol
@@ -33,6 +33,8 @@ class GlobalController:
         self.noTurningDistance=noTurningDistance
         self.thymioPos=[0,0]
         self.thymioTh=0
+        self.wasLocal=False
+        self.addedOutOfTubeAvancementTarget=addedOutOfTubeAvancementTarget
 
     @staticmethod
     def remap(x, in_min, in_max, out_min, out_max, constrain=True):
@@ -145,6 +147,7 @@ class GlobalController:
         self.currentTargetID shall be set to 1 in the beginning"""
         self.thymioPos = thymioPos # saving the val for futur
         self.thymioTh = thymioTh # saving the val for futur
+
         # global navType
         if navType == "global":
             nextW = self.path[self.currentTargetID]
@@ -203,7 +206,10 @@ class GlobalController:
                     self.state = "start"
 
             elif self.state == "turnOutTube":
-                intermWaypoint = GlobalController.compute_interm_waypoint(lastW, nextW, thymioPos, self.outOfTubeAvancementTarget)
+
+                intermWaypoint = GlobalController.compute_interm_waypoint(lastW, nextW, thymioPos,
+                                                                          self.outOfTubeAvancementTarget + self.wasLocal*self.addedOutOfTubeAvancementTarget )
+                self.wasLocal=False
                 epsTh = GlobalController.compute_eps(thymioPos, intermWaypoint, thymioTh)
                 disToTravel = np.linalg.norm(thymioPos - intermWaypoint)
                 turn_angle_move_distance(thymio, epsTh, disToTravel)
@@ -218,6 +224,7 @@ class GlobalController:
                 print("error, self.state unknown")
         else:  # currently switched to local nav
             self.state = "start"  # so we are in the correct self.state when we come back to globalNav
+            self.wasLocal=True
             print("NavType: " + navType)
 
         # fake odom
