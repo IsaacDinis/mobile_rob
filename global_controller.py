@@ -105,9 +105,31 @@ class GlobalController:
         proj=np.dot( robotPos-prevW, nextW-prevW)/np.linalg.norm(nextW-prevW)  #projection of robotPos onto the goal line
         return (proj+cornerCut)>np.linalg.norm(nextW-prevW)
 
-    def allowedToSwitchToLocal(self, thymioPos, thymioTh, thymio, navType):
+
+
+    def isAllowedToSwitchToLocal(self):
         nextW = self.path[self.currentTargetID]
         lastW = self.path[self.currentTargetID - 1]
+        if GlobalController.is_inside_tube(lastW, nextW, self.thymioPos,self.tubeTol):
+            return "True in tube"
+        else: #outOfTube
+            projOnTube=GlobalController.compute_interm_waypoint(lastW, nextW, self.thymioPos, 0) #compute exact projection
+            eps=GlobalController.compute_eps(self.thymioPos, projOnTube, self.thymioTh)
+
+            v1 = nextW-lastW
+            v2 = self.thymioPos - lastW
+            if np.cross(v1,v2)<=0: # where are on the right of our line
+                if 0 < eps < np.pi/2:
+                    return "True out tube, right"
+                else:
+                    return "False out tube, right"
+            else: #we are on the left of out line
+                if -np.pi/2 < eps < 0:
+                    return "True out tube, left"
+                else:
+                    return "False out tube, left"
+
+
 
 
 
@@ -117,7 +139,8 @@ class GlobalController:
         """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including
         starting waypoint.
         self.currentTargetID shall be set to 1 in the beginning"""
-
+        self.thymioPos = thymioPos # saving the val for futur
+        self.thymioTh = thymioTh # saving the val for futur
         # global navType
         if navType == "global":
             nextW = self.path[self.currentTargetID]
