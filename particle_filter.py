@@ -1,20 +1,19 @@
-# Code adapted from:
-# Wang S., Colas F., Liu M., Mondada F., Magnenat S. (2018) Localization of Inexpensive Robots with Low-Bandwidth
-# Sensors. In: Groß R. et al. (eds) Distributed Autonomous Robotic Systems. Springer Proceedings in Advanced
-# Robotics, vol 6. Springer, Cham
-
+"""
+Code adapted from:
+Wang S., Colas F., Liu M., Mondada F., Magnenat S. (2018) Localization of Inexpensive Robots with Low-Bandwidth
+Sensors. In: Groß R. et al. (eds) Distributed Autonomous Robotic Systems. Springer Proceedings in Advanced
+Robotics, vol 6. Springer, Cham
+"""
 import numpy as np
 from numba import jit
 import utils as ut
 
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-class MonteCarlo:
-    # _pi = np.pi
-    # _1sqrt2pi = 1. / np.sqrt(2. * _pi)
 
+class MonteCarlo:
+    """ Class containing all the localisation functions, using a particle filter """
     def __init__(self, ground_map_left, ground_map_right, particles_count, sigma_obs, prop_uniform, alpha_xy,
                  alpha_theta, state_init=None):
         # sanity check on parameters
@@ -46,20 +45,21 @@ class MonteCarlo:
         self.estimated_particle = np.zeros_like(particles[0, :], dtype=float)
 
     def apply_obs_and_resample(self, left_color, right_color):
+        """ Apply observation (values measured on the map) in updating probability weights of each particle,
+         then resample according to these weights """
         mapshape = self.ground_map_left.shape
         self.particles, self.weights = self._apply_obs_and_resample(self.particles, self.particles.shape[0],
                                                                     self.ground_map_left, self.ground_map_right,
-                                                                    self.sigma_obs, self.N_uniform, mapshape,left_color,
-                                                                    right_color)
+                                                                    self.sigma_obs, self.N_uniform, mapshape,
+                                                                    left_color, right_color)
 
     @staticmethod
     @jit(nopython=True)
     def _apply_obs_and_resample(particles, particles_count, ground_map_left, ground_map_right,
                                 sigma_obs, N_uniform, mapshape, left_color, right_color):
-        """ Apply observation and update probability weights, then resample"""
+        """ Optimised function, see apply_obs_and_resample for more info """
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
         particles_count = particles_count
-        # particles = np.asarray(particles)
         weights = np.zeros(particles_count)
         nb_ok = 0
         for i in range(particles_count):
@@ -95,11 +95,10 @@ class MonteCarlo:
 
         # Resample
         resample_count = particles_count - N_uniform
-        # assert weights.sum() > 0.
         if not(weights.sum() > 0.):
             print("not(weights.sum() > 0.):", weights.sum())
             print(weights / weights.sum())
-            weights += 1e-10
+            weights += 1e-10  # added for numerical stability
         else:
             weights /= weights.sum()
         # self.weights = weights
@@ -118,7 +117,7 @@ class MonteCarlo:
         # else:
         particles[:resample_count] = resampled
 
-        # assert particles.shape[0] == particles_count
+        # assert particles.shape[0] == particles_count  # assert not supported by numba
         if not(particles.shape[0] == particles_count):
             print("Assert failure: not(particles.shape[0] == particles_count)")
 
@@ -135,13 +134,16 @@ class MonteCarlo:
         return particles, weights
 
     def apply_command(self, d_x, d_y, d_theta):
+        """ Move the particles according to the measured odometry
+            :input d_x d_y d_theta measured by the odometry
+            """
         self.particles = self._apply_command(self.particles, self.particles.shape[0], self.alpha_theta, self.alpha_xy,
                                              np.float(d_x), np.float(d_y), d_theta)
 
     @staticmethod
     @jit(nopython=True)
     def _apply_command(particles, particles_count, alpha_theta, alpha_xy, d_x, d_y, d_theta):
-        """ Apply command to each particle """
+        """ Optimised function, see apply_command for more info """
         d_xy = np.array([d_x, d_y])
         particles = np.asarray(particles)
         particles_count = particles_count
@@ -178,7 +180,7 @@ class MonteCarlo:
     @staticmethod
     @jit(nopython=True)
     def _estimate_state(particles, particles_count, conf_xy, conf_theta):
-        # TODO something smarter than the mean, but maybe not as overkill as RANSAC
+        """ Optimised function, see estimate_state for more info """
         # limits for considering participating to the state estimation
         theta_lim = np.radians(5)
         xy_lim = 1.5

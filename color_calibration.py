@@ -7,7 +7,7 @@ def nothing(x):
     pass
 
 
-use_image = True
+use_image = False
 
 
 open('data\\color_calibration.txt', 'w+').close()  # clear file
