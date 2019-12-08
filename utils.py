@@ -1,3 +1,7 @@
+"""
+Utilitary functions, optimised with numba
+"""
+
 import numpy as np
 from numba import jit
 

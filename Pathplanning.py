@@ -23,8 +23,9 @@ class Obstacle:
 MAP_MAX_X_AXIS= 81
 MAP_MAX_Y_AXIS= 114
 
+
 def take_picture_to_init(margeObs=5, cam_capture=2):
-    """will return path, thymio pos and thymio theta"""
+    """will return path, thymio pos and angle"""
 
     # img = cv2.imread("map_test\\map_test_more_complicated.png")
     # img = cv2.flip(img, 0)
@@ -46,11 +47,11 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
         vertex_vision = np.ndarray.tolist(obst_vis.squeeze())
         obsList.append(Obstacle(vertex_vision, margeObs))  # converting obstacle to correct format
 
-
     # Merge
     for i in range(0, len(obsList)):
         for j in range(i+1, len(obsList) ):
-            if obsList[i].expandEnabled and obsList[j].expandEnabled and obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
+            if obsList[i].expandEnabled and obsList[j].expandEnabled and \
+                    obsList[i].polygoneExpanded.intersects(obsList[j].polygoneExpanded):
 
                 obsList[i].polygoneExpanded=cascaded_union([obsList[i].polygoneExpanded, obsList[j].polygoneExpanded])
                 obsList[i].computeExpandedVertices()
@@ -117,11 +118,11 @@ def find_path(thymioCoord, goal, obsList, plotFlag=True):
     return path
 
 
-if __name__ == "__main__":
-   # [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
-   dx=-55
-   thymioCoord=[1, 20]
-   goal = [1, 50]
-   obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
-   find_path(thymioCoord, goal, [obs1], plotFlag=True)
+# if __name__ == "__main__":
+#     # [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
+#     dx=-55
+#     thymioCoord=[1, 20]
+#     goal = [1, 50]
+#     obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
+#     find_path(thymioCoord, goal, [obs1], plotFlag=True)
 

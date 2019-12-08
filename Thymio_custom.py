@@ -1,12 +1,15 @@
-# Communication with Thymio via serial port or tcp
-# Author: Yves Piguet, EPFL
-
+"""
+Communication with Thymio via serial port or tcp
+Author: Yves Piguet, EPFL
+Modified by our group for our needs
+"""
 # Go in RemoteNode's __init__ to add custom keys
 
 import threading
 import numpy as np
 import time
-from local_avoidance import *
+import local_avoidance as loc_av
+import control as ctrl
 
 
 # our function
@@ -37,7 +40,6 @@ def reset_thymio(thymio):
 class Message:
     """Aseba message data.
     """
-
     # v5
     ID_BOOTLOADER_RESET = 0x8000
     ID_BOOTLOADER_READ_PAGE = 0x8001
@@ -381,6 +383,7 @@ class Thymio:
         self.reset_odom = False
 
         def do_refresh():  # ############################################################ REFRESH IS HERE
+            """ refresh called at refresh_rate, very practical for us for obstacle detection for example """
             while not self.terminating:
                 self.refreshing_trigger.wait(self.refreshing_timeout)
                 self.refreshing_trigger.clear()
@@ -388,13 +391,11 @@ class Thymio:
 
                 self.increment_odometry()
                 if self.nav_flag == "global":
-                    check_obstacle(self, self.glob_contr)  # modifies self.local_nav_dir
+                    loc_av.check_obstacle(self, self.glob_contr)  # modifies self.local_nav_dir
 
                 if self.local_nav_dir != "none":
                     if self.nav_flag == "global":
-                        self.set_var("movement_mode", 0)
-                        self.set_var("motor.left.target", 0)
-                        self.set_var("motor.right.target", 0)
+                        ctrl.stop_thymio(self)
 
                     self.nav_flag = "local"
                     # self.local_nav_dir = direction
@@ -420,12 +421,13 @@ class Thymio:
         self.close()
 
     def increment_odometry(self):
+        """ Added function returning the deltas x, y, theta since its last call"""
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
-        try:
+        try:  # to avoid crashing when thymio not fully initialised
             table = self["event.args"]
         except KeyError:
             table = [0]*4
-        try:
+        try:  # to avoid crashing when thymio not fully initialised
             dl, dr, mult_l, mult_r = table[0:4]
         except ValueError:
             dl, dr, mult_l, mult_r = 0., 0., 0, 0

@@ -4,3 +4,7 @@ https://pysource.com/2018/01/20/loading-images-opencv-3-4-with-python-3-tutorial
 https://www.pyimagesearch.com/2014/07/21/detecting-circles-images-using-opencv-hough-circles/
 https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
 https://docs.opencv.org/3.4/dd/d49/tutorial_py_contour_features.html
+
+Wang S., Colas F., Liu M., Mondada F., Magnenat S. (2018) Localization of Inexpensive Robots with Low-Bandwidth
+Sensors. In: Groß R. et al. (eds) Distributed Autonomous Robotic Systems. Springer Proceedings in Advanced
+Robotics, vol 6. Springer, Cham
