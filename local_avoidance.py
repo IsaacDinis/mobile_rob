@@ -8,8 +8,8 @@ from time import sleep
 def check_obstacle(thymio):
     # global main.glob_ctrl
 
-    threshold = 2200
-    threshold_center = 3700
+    threshold = 1800
+    threshold_center = 3200
     try:
         thymio["prox.horizontal"]
     except KeyError:

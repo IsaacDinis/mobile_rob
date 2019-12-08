@@ -269,15 +269,16 @@ class MonteCarlo:
         ratioA0 = 1.0877  # because the printed map doesn't have the theoretical dimension
 
         if base_filename is not None:
-            if self.fig is None:
-                self.fig = Figure((3, 3), tight_layout=True)
-            canvas = FigureCanvas(self.fig)
+            fig = Figure((3, 3), tight_layout=True)
+            canvas = FigureCanvas(fig)
         else:
             if self.fig is None:
                 self.fig = plt.figure()
+                fig = self.fig
             else:
-                self.fig.clear()
-        ax = self.fig.gca()
+                fig = self.fig
+                fig.clf()
+        ax = fig.gca()
         ax.set_xlim([0, self.ground_map_left.shape[0]])
         ax.set_ylim([0, self.ground_map_left.shape[1]])
         x, y, theta = self.estimated_particle
@@ -325,6 +326,6 @@ class MonteCarlo:
 
         if base_filename is not None:
             canvas.print_figure(base_filename + '.png', dpi=300)
-        else:
+        # else:
             # ax.show()
-            self.fig.show()
+            # self.fig.show()
