@@ -16,12 +16,13 @@ def capture_image_from_webcam(webcam_number):
         frame_proj = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32 and frame_proj is not None:
+            frame_proj = resize_img(frame_proj, 1.5)
             cap.release()
             cv2.destroyAllWindows()
             break
 
         if frame_proj is not None:
-            # frame_proj = resize_img(frame_proj, 1.5)
+            frame_proj = resize_img(frame_proj, 1.5)
             vision_img = frame_proj.copy()
             thymio = detect_thymio(vision_img)
             if thymio:
