@@ -58,7 +58,7 @@ for fl in glob.glob(save_dir+"*"):
     os.remove(fl)
 
 # plot the inital state
-loc.plot_state(base_filename=save_dir+str(0), map_back=ground_map, num_particles=50, path=path)
+loc.plot_state( map_back=ground_map, num_particles=50) #, path=path)  # base_filename=save_dir+str(0)
 
 Thymio_custom.wait_init(thymio)
 Thymio_custom.reset_thymio(thymio)
