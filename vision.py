@@ -29,6 +29,10 @@ def capture_image_from_webcam(webcam_number):
             cap.release()
             cv2.destroyAllWindows()
             break
+        elif k == 27:
+            cap.release()
+            cv2.destroyAllWindows()
+            return None
 
         if frame_proj is not None:  # displays the feature detection if the function was able to detect the map
             frame_proj = resize_img(frame_proj, 1.5)
