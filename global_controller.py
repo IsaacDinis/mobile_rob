@@ -139,7 +139,7 @@ class GlobalController:
 
 
 
-    def followPath(self, thymioPos, thymioTh, thymio, navType):  # ATTENTION Changé l'ordre de theta et pos - Loic
+    def followPath(self, thymioPos, thymioTh, thymio, navType):
         """ fct to navigate in and out a tube on a given set of waypoint (always give the total self.path including
         starting waypoint.
         self.currentTargetID shall be set to 1 in the beginning"""
