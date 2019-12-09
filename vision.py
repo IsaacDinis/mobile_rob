@@ -24,7 +24,7 @@ def capture_image_from_webcam(webcam_number):
         frame_proj = map_projection(frame)
         k = cv2.waitKey(5) & 0xFF
         if k == 32 and frame_proj is not None:  # capture when the space bar is pressed
-            print("space pressed")
+            print("image capture")
             frame_proj = resize_img(frame_proj, 1.5)
             cap.release()
             cv2.destroyAllWindows()
@@ -49,8 +49,8 @@ def capture_image_from_webcam(webcam_number):
             obstacles = detect_obstacles(vision_img)
             draw_obstacles(vision_img, obstacles)
             cv2.imshow("vision frame", vision_img)
-
-    return frame_proj, vision_img
+    vision_img_rgb = cv2.cvtColor(vision_img, cv2.COLOR_BGR2RGB)
+    return frame_proj, vision_img_rgb
 
 
 def resize_img(frame, scale_factor):
