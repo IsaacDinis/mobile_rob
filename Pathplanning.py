@@ -37,7 +37,6 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     https://deparkes.co.uk/2015/02/28/how-to-merge-polygons-in-python/
 
     """
-    Environment = reload(extremitypathfinder.extremitypathfinder.PolygonEnvironment)
     img, vision_img = vision.capture_image_from_webcam(cam_capture)
 
     pix_to_unit_x = 27*3/img.shape[1]
