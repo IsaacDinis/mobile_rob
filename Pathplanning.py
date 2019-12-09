@@ -36,15 +36,19 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
 
     """
 
-
-    img = vision.capture_image_from_webcam(cam_capture)
+    img, vision_img = vision.capture_image_from_webcam(cam_capture)
 
     pix_to_unit_x = 27*3/img.shape[1]
     pix_to_unit_y = 38*3/img.shape[0]
-    thymioCoord = vision.detect_thymio(img)
 
+    thymioCoord = vision.detect_thymio(img)
+    if thymioCoord is None:
+        print("thymio not found")
     goal = vision.detect_goal(img)
-    goal = (goal[0]*pix_to_unit_x, goal[1]*pix_to_unit_y)
+    if goal is not None:
+        goal = (goal[0]*pix_to_unit_x, goal[1]*pix_to_unit_y)
+    else:
+        print("goal not found")
     obstacles_vision = vision.detect_obstacles(img)
 
     obsList = []
@@ -64,7 +68,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
                 obsList[i].computeExpandedVertices()
                 obsList[j].expandEnabled = False
 
-    return thymioCoord[0]*pix_to_unit_x, thymioCoord[1]*pix_to_unit_y, thymioCoord[2], goal, obsList
+    return thymioCoord[0]*pix_to_unit_x, thymioCoord[1]*pix_to_unit_y, thymioCoord[2], goal, obsList, vision_img
 
 
 def find_path(thymioCoord, goal, obsListOrig, plotFlag=True):
