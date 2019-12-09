@@ -5,9 +5,6 @@ Utilitary functions, optimised with numba
 import numpy as np
 from numba import jit
 
-
-# Utils ------------------------------------
-
 @jit(nopython=True)
 def norm(x, u, s):
     factor = 1. / (s * np.sqrt(2.*np.pi))
@@ -94,10 +91,3 @@ def unit_to_sensor(value, table):
     if table_bin == 16:
         return table[16]
     return float(table[table_bin]) * (1. - r) + float(table[table_bin + 1]) * r
-
-# @jit(nopython=True)
-# def weird(N_uniform, mapshape):
-#     tmp = np.array([np.float(mapshape[0]), np.float(mapshape[1]), np.pi * 2.])
-#     new_particles = np.multiply(np.random.uniform(0, 1, (N_uniform, 3)), tmp)
-#     return new_particles
-

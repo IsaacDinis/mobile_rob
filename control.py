@@ -54,27 +54,3 @@ def stop_thymio(thymio):
     thymio.set_var("movement_mode", 0)
     thymio.set_var("motor.left.target", 0)
     thymio.set_var("motor.right.target", 0)
-
-
-
-# if __name__ == "__main__":
-#     import time
-#     thymio = Thymio.serial(port="COM14", refreshing_rate=0.1)
-#
-#
-#     ok = False
-#     yy, zz = [], []
-#     while not ok or len(zz) == 0:
-#         time.sleep(0.5)
-#         try:
-#             thymio["event.args"] = [0]*32
-#             zz = thymio["prox.ground.delta"]
-#         except KeyError:
-#             time.sleep(1)
-#         else:
-#             ok = True
-#         time.sleep(5)
-#
-#     print("turning_now!")
-#     turn_angle(thymio, np.pi / 4)
-

@@ -6,8 +6,6 @@ from time import sleep
 
 
 def check_obstacle(thymio):
-    # global main.glob_ctrl
-
     threshold = 1800
     threshold_center = 3200
     try:
@@ -99,9 +97,3 @@ def local_avoidance(thymio):
         thymio.nav_flag = "global"
     return
 
-
-if __name__ == "__main__":
-    thymio = Thymio.serial(port="COM6", refreshing_rate=0.1)
-    sleep(5)
-    while True:
-        local_avoidance(thymio)

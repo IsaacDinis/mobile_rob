@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
-
-
 import os
 import sys
 import time
@@ -110,7 +104,6 @@ class GlobalController:
         return (proj+cornerCut)>np.linalg.norm(nextW-prevW)
 
 
-
     def isAllowedToSwitchToLocal(self):
         nextW = self.path[self.currentTargetID]
         lastW = self.path[self.currentTargetID - 1]
@@ -134,11 +127,6 @@ class GlobalController:
                     return True
                 else:
                     return False
-
-
-
-
-
 
 
     def followPath(self, thymioPos, thymioTh, thymio, navType):
@@ -223,29 +211,3 @@ class GlobalController:
             self.state = "start"  # so we are in the correct self.state when we come back to globalNav
             self.wasLocal=True
             print("NavType: " + navType)
-
-
-
-if __name__ == "__main__":
-# %%
-    thymio = Thymio.serial(port="COM18", refreshing_rate=0.1)
-    ok = False
-    yy, zz = [], []
-    while not ok or len(zz) == 0:
-        time.sleep(0.5)
-        try:
-            thymio["event.args"] = [0]*32
-            zz = thymio["prox.ground.delta"]
-        except KeyError:
-            time.sleep(0.1)
-        else:
-            ok = True
-        time.sleep(0.5)
-
-    navType = "global"  # TODO isaac : refresh() is going to modify this var
-    globalcontroller= GlobalController([np.array([1, 1]), np.array([10, 10]), np.array([15, 5])] )
-    while 1:
-        time.sleep(1) #fake lag for future particule filter
-        thymioTh = np.pi
-        thymioPos = np.array([2, 6])
-        globalcontroller.followPath(thymioTh, thymioPos, thymio)

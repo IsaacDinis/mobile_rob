@@ -137,9 +137,12 @@ def detect_goal(frame):
         pos = list()
         cnt = contours[0]
         M = cv2.moments(cnt)  # computes the center
-        pos.append(int(M["m10"] / M["m00"]))
-        pos.append(int(M["m01"] / M["m00"]))
-        pos = tuple(pos)
+        try:
+            pos.append(int(M["m10"] / M["m00"]))
+            pos.append(int(M["m01"] / M["m00"]))
+            pos = tuple(pos)
+        except ZeroDivisionError:
+            return None
         return pos
     else:
         return None
@@ -251,5 +254,5 @@ def draw_thymio(frame, thymio_param):
 
 def draw_goal(frame, pos):
     """ draw function for the goal"""
-    cv2.circle(frame, pos, 2, (0, 0, 0), 3)
+    cv2.circle(frame, pos, 5, (0, 0, 255), -1)
 

@@ -1,5 +1,4 @@
 import numpy as np
-from importlib import reload
 import matplotlib.pyplot as plt
 from extremitypathfinder.extremitypathfinder import PolygonEnvironment as Environment
 
@@ -136,16 +135,3 @@ def find_path(thymioCoord, goal, obsListOrig, plotFlag=True):
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
     return path
-
-
-if __name__ == "__main__":
-#     # [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
-     dx=-55
-     thymioCoord=[1, 20]
-     goal = [1, 50]
-     obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
-     find_path(thymioCoord, goal, [obs1], plotFlag=True)
-     find_path(thymioCoord, goal, [obs1], plotFlag=True)
-     find_path(thymioCoord, goal, [obs1], plotFlag=True)
-     find_path(thymioCoord, goal, [obs1], plotFlag=True)
-     find_path(thymioCoord, goal, [obs1], plotFlag=True)
