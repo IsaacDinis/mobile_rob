@@ -50,7 +50,7 @@ def capture_image_from_webcam(webcam_number):
             draw_obstacles(vision_img, obstacles)
             cv2.imshow("vision frame", vision_img)
 
-    return frame_proj
+    return frame_proj, vision_img
 
 
 def resize_img(frame, scale_factor):
@@ -125,7 +125,6 @@ def detect_thymio(frame):
         return thymio_param.squeeze()  # return the one dimension array
 
     else:
-        print("thymio not found")
         return None
 
 
@@ -142,9 +141,7 @@ def detect_goal(frame):
         pos.append(int(M["m01"] / M["m00"]))
         pos = tuple(pos)
         return pos
-
     else:
-        print("goal not found")
         return None
 
 
