@@ -4,3 +4,4 @@ output/*
 data/color_calibration.txt
 .ipynb_checkpoints/
 Main.ipynb
+main_jupyter.ipynb

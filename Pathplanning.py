@@ -1,6 +1,8 @@
 import numpy as np
+from importlib import reload
 import matplotlib.pyplot as plt
 from extremitypathfinder.extremitypathfinder import PolygonEnvironment as Environment
+
 from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 
@@ -35,7 +37,7 @@ def take_picture_to_init(margeObs=5, cam_capture=2):
     https://deparkes.co.uk/2015/02/28/how-to-merge-polygons-in-python/
 
     """
-
+    Environment = reload(extremitypathfinder.extremitypathfinder.PolygonEnvironment)
     img, vision_img = vision.capture_image_from_webcam(cam_capture)
 
     pix_to_unit_x = 27*3/img.shape[1]
@@ -75,12 +77,12 @@ def find_path(thymioCoord, goal, obsListOrig, plotFlag=True):
     """Given an inital position, a goal and a set of obstacle, will create a Visibility Graph of the map,
     then perform an A* search on the given graph, and return the shortest path
     Librairy used for visiblity Graph generation and Graph search:https://github.com/MrMinimal64/extremitypathfinder
-
     """
+
     obsList=obsListOrig.copy()
     MARGE_BORD=5
     EXTREME_DIST=400
-    #if obstacle are near the map border, make them bigger so we are surefound path dosn't go trough the small gap
+    # if obstacle are near the map border, make them bigger so we are surefound path dosn't go trough the small gap
     for iObs in range(0, len(obsList)):
         for iVert in range(0, len(obsList[iObs].vertexExpanded)):
             listV=list(obsList[iObs].vertexExpanded[iVert])
@@ -113,9 +115,9 @@ def find_path(thymioCoord, goal, obsListOrig, plotFlag=True):
         plt.plot(thymioCoord[0], thymioCoord[1], 'o', color='green')
         plt.plot(goal[0], goal[1], 'o', color='red')
 
-
     map = Environment()
-    #boundary of the map, anti clockwise vertex numbering!
+
+    # boundary of the map, anti clockwise vertex numbering!
     boundary_coordinates = [(0.0, 0.0), (MAP_MAX_X_AXIS, 0.0), (MAP_MAX_X_AXIS, MAP_MAX_Y_AXIS), (0.0, MAP_MAX_Y_AXIS)]
 
 
@@ -137,11 +139,14 @@ def find_path(thymioCoord, goal, obsListOrig, plotFlag=True):
     return path
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 #     # [thymioCoord, thymioTh, goal, obsList]=take_picture_to_init(margeObs=5, cam_capture=2)
-#     dx=-55
-#     thymioCoord=[1, 20]
-#     goal = [1, 50]
-#     obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
-#     find_path(thymioCoord, goal, [obs1], plotFlag=True)
-
+     dx=-55
+     thymioCoord=[1, 20]
+     goal = [1, 50]
+     obs1=Obstacle([(60+dx,35),(80+dx,35),(80+dx,30),(60+dx,30)], 1)
+     find_path(thymioCoord, goal, [obs1], plotFlag=True)
+     find_path(thymioCoord, goal, [obs1], plotFlag=True)
+     find_path(thymioCoord, goal, [obs1], plotFlag=True)
+     find_path(thymioCoord, goal, [obs1], plotFlag=True)
+     find_path(thymioCoord, goal, [obs1], plotFlag=True)
