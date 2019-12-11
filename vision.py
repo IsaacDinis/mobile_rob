@@ -251,5 +251,5 @@ def draw_thymio(frame, thymio_param):
 
 def draw_goal(frame, pos):
     """ draw function for the goal"""
-    cv2.circle(frame, pos, 2, (0, 0, 0), 3)
+    cv2.circle(frame, pos, 5, (0, 0, 0), -1)
 
